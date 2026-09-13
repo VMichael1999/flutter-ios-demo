@@ -1,0 +1,19 @@
+{
+  "project": "proyect",
+  "platform": "ios",
+  "github": {
+    "owner": "VMichael1999",
+    "repo": "flutter-ios-demo"
+  },
+  "provider": "github",
+  "codemagic": {},
+  "bitrise": {},
+  "ios": {},
+  "flutter": {
+    "version": "3.29.1",
+    "watch": {}
+  },
+  "reactNative": {},
+  "kmp": {},
+  "mobai": {}
+}
