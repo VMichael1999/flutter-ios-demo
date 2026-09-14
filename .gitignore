@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Variables de entorno locales con valores reales. Plantilla: .env.example
+.env
+.env.*
+!.env.example

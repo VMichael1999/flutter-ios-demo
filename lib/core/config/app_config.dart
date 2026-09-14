@@ -40,8 +40,9 @@ abstract final class AppConfig {
   /// Servidores de Overpass (OpenStreetMap), en orden de preferencia.
   static final overpassEndpoints = [
     Uri.parse('https://overpass-api.de/api/interpreter'),
-    Uri.parse('https://overpass.private.coffee/api/interpreter'),
+    Uri.parse('https://overpass.kumi.systems/api/interpreter'),
     Uri.parse('https://maps.mail.ru/osm/tools/overpass/api/interpreter'),
+    Uri.parse('https://overpass.private.coffee/api/interpreter'),
   ];
 
   /// Pregunta que se envía cuando el usuario manda una foto sin texto.

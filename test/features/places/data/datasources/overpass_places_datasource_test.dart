@@ -41,23 +41,47 @@ void main() {
     ],
   };
 
-  test('envía la consulta de la categoría y el radio', () async {
-    late String query;
+  OverpassPlacesDataSource dataSourceWith(
+    http.Client client, {
+    List<Uri>? endpoints,
+    Duration hedgeDelay = Duration.zero,
+  }) {
+    return OverpassPlacesDataSource(
+      client,
+      endpoints: endpoints ?? [primary],
+      hedgeDelay: hedgeDelay,
+      timeout: const Duration(seconds: 2),
+    );
+  }
+
+  Future<List<String>> fetchNames(OverpassPlacesDataSource dataSource) async {
+    final places = await dataSource.fetchNearby(
+      center: testCenter,
+      category: PlaceCategory.restaurant,
+      radiusMeters: 1000,
+    );
+    return [for (final place in places) place.name];
+  }
+
+  test('envía la consulta de la categoría y el radio identificando la app',
+      () async {
+    late http.Request sent;
     final client = MockClient((request) async {
-      query = Uri.decodeQueryComponent(request.body);
+      sent = request;
       return jsonResponse(overpassBody);
     });
-    final dataSource = OverpassPlacesDataSource(client, endpoints: [primary]);
 
-    await dataSource.fetchNearby(
+    await dataSourceWith(client).fetchNearby(
       center: testCenter,
       category: PlaceCategory.pharmacy,
       radiusMeters: 5000,
     );
 
+    final query = Uri.decodeQueryComponent(sent.body);
     expect(query, contains('nwr["amenity"="pharmacy"]'));
     expect(query, contains('around:5000,-12.1211,-77.0297'));
     expect(query, contains('[out:json]'));
+    expect(sent.headers['User-Agent'], OverpassPlacesDataSource.userAgent);
   });
 
   test('filtra por el nombre del local sin permitir inyecciones', () {
@@ -69,10 +93,7 @@ void main() {
     );
 
     expect(query, contains('["name"~"Café Tostado out",i]'));
-    expect(
-      OverpassPlacesDataSource.sanitizePlaceName('  ~~~  '),
-      isNull,
-    );
+    expect(OverpassPlacesDataSource.sanitizePlaceName('  ~~~  '), isNull);
     expect(
       OverpassPlacesDataSource.buildQuery(
         center: testCenter,
@@ -85,39 +106,69 @@ void main() {
 
   test('devuelve solo los lugares con nombre y coordenadas', () async {
     final client = MockClient((_) async => jsonResponse(overpassBody));
-    final dataSource = OverpassPlacesDataSource(client, endpoints: [primary]);
 
-    final places = await dataSource.fetchNearby(
-      center: testCenter,
-      category: PlaceCategory.restaurant,
-      radiusMeters: 5000,
+    expect(
+      await fetchNames(dataSourceWith(client)),
+      ['Chifa Miraflores', 'Antigua Bodega Dalmacia'],
     );
-
-    expect(places.map((p) => p.name), [
-      'Chifa Miraflores',
-      'Antigua Bodega Dalmacia',
-    ]);
   });
 
-  test('usa el siguiente servidor si el primero está saturado', () async {
-    final requested = <Uri>[];
+  test('usa otro servidor si el primero está saturado', () async {
     final client = MockClient((request) async {
-      requested.add(request.url);
       return request.url == primary
           ? http.Response('Gateway Timeout', 504)
           : jsonResponse(overpassBody);
     });
-    final dataSource =
-        OverpassPlacesDataSource(client, endpoints: [primary, mirror]);
 
-    final places = await dataSource.fetchNearby(
-      center: testCenter,
-      category: PlaceCategory.restaurant,
-      radiusMeters: 1000,
+    final names = await fetchNames(
+      dataSourceWith(client, endpoints: [primary, mirror]),
     );
 
+    expect(names, hasLength(2));
+  });
+
+  test('no espera a un servidor colgado: usa el primero que responde',
+      () async {
+    final requested = <Uri>[];
+    final client = MockClient((request) async {
+      requested.add(request.url);
+      if (request.url == primary) {
+        // Nunca responde a tiempo, como overpass.private.coffee.
+        await Future<void>.delayed(const Duration(seconds: 10));
+      }
+      return jsonResponse(overpassBody);
+    });
+    final dataSource = dataSourceWith(
+      client,
+      endpoints: [primary, mirror],
+      hedgeDelay: const Duration(milliseconds: 50),
+    );
+
+    final stopwatch = Stopwatch()..start();
+    final names = await fetchNames(dataSource);
+
+    expect(names, hasLength(2));
     expect(requested, [primary, mirror]);
-    expect(places, hasLength(2));
+    expect(stopwatch.elapsed, lessThan(const Duration(seconds: 1)));
+  });
+
+  test('no lanza el siguiente servidor si el primero ya respondió', () async {
+    final requested = <Uri>[];
+    final client = MockClient((request) async {
+      requested.add(request.url);
+      return jsonResponse(overpassBody);
+    });
+
+    await fetchNames(
+      dataSourceWith(
+        client,
+        endpoints: [primary, mirror],
+        hedgeDelay: const Duration(milliseconds: 100),
+      ),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+
+    expect(requested, [primary]);
   });
 
   test('lanza PlacesFailure si ningún servidor responde', () async {
@@ -125,11 +176,9 @@ void main() {
       if (request.url == primary) throw http.ClientException('sin red');
       return http.Response('no es json', 200);
     });
-    final dataSource =
-        OverpassPlacesDataSource(client, endpoints: [primary, mirror]);
 
     expect(
-      dataSource.fetchNearby(
+      dataSourceWith(client, endpoints: [primary, mirror]).fetchNearby(
         center: testCenter,
         category: PlaceCategory.restaurant,
         radiusMeters: 1000,

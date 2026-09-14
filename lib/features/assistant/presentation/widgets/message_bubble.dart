@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/chat_message.dart';
+import 'nova_thinking_indicator.dart';
 import 'place_card.dart';
-import 'typing_indicator.dart';
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({super.key, required this.message});
@@ -14,7 +14,7 @@ class MessageBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final isUser = message.isUser;
-    final showTyping = message.isStreaming && message.text.isEmpty;
+    final isThinking = message.isStreaming && message.text.isEmpty;
     final text = message.text.trimRight();
 
     return Align(
@@ -42,7 +42,12 @@ class MessageBubble extends StatelessWidget {
                   ),
                 ),
               ),
-            if (showTyping || text.isNotEmpty)
+            if (isThinking)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 4),
+                child: NovaThinkingIndicator(),
+              )
+            else if (text.isNotEmpty)
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 padding:
@@ -57,14 +62,12 @@ class MessageBubble extends StatelessWidget {
                     bottomRight: Radius.circular(isUser ? 4 : 20),
                   ),
                 ),
-                child: showTyping
-                    ? const TypingIndicator()
-                    : Text(
-                        message.isStreaming ? '$text ▍' : text,
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: isUser ? scheme.onPrimary : scheme.onSurface,
-                        ),
-                      ),
+                child: Text(
+                  message.isStreaming ? '$text ▍' : text,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: isUser ? scheme.onPrimary : scheme.onSurface,
+                  ),
+                ),
               ),
             for (final place in message.places)
               PlaceCard(

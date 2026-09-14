@@ -98,13 +98,23 @@ ChatPage → ChatBloc → SendMessage → AiRepository → AiRemoteDataSource �
 
 ```bash
 flutter pub get
-flutter run
+cp .env.example .env   # en Windows: copy .env.example .env
+flutter run --dart-define-from-file=.env
 ```
 
-Variables opcionales con `--dart-define`:
+La configuración vive en `.env`, que **nunca se sube a GitHub** (está en
+`.gitignore`); `.env.example` es la plantilla con todas las variables:
 
-- `NOVA_ENV`: `dev` (por defecto), `qa` o `prod`.
-- `NOVA_GEMINI_MODEL`: modelo de Gemini (por defecto `gemini-3.1-flash-lite`).
+| Variable | Uso |
+| --- | --- |
+| `NOVA_ENV` | `dev`, `qa` o `prod` |
+| `NOVA_GEMINI_MODEL` | Modelo de Gemini (por defecto `gemini-3.1-flash-lite`) |
+| `NOVA_APP_CHECK_DEBUG` | `true` para usar tokens de depuración de App Check |
+| `NOVA_RECAPTCHA_SITE_KEY` | Clave de sitio de reCAPTCHA Enterprise (web en producción) |
+
+> Todo lo que se compila dentro de la app puede extraerse del APK. Las claves
+> privadas de servicios de pago (OpenAI, Anthropic, Google Places) no van en
+> `.env`: deben guardarse en un servidor, por ejemplo Cloud Functions.
 
 ## Tests
 

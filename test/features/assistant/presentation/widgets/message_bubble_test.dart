@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
 import 'package:nova_ai/features/assistant/presentation/widgets/message_bubble.dart';
+import 'package:nova_ai/features/assistant/presentation/widgets/nova_thinking_indicator.dart';
 import 'package:nova_ai/features/assistant/presentation/widgets/place_card.dart';
-import 'package:nova_ai/features/assistant/presentation/widgets/typing_indicator.dart';
 
 import '../../../../fixtures/places_fixtures.dart';
 
@@ -45,14 +45,26 @@ void main() {
     expect(find.bySemanticsLabel('Imagen enviada'), findsOneWidget);
   });
 
-  testWidgets('muestra el indicador de escritura mientras llega la respuesta',
+  testWidgets('muestra a NOVA pensando mientras llega la respuesta',
       (tester) async {
     await pumpBubble(
       tester,
       const ChatMessage.assistant(id: '1', isStreaming: true),
     );
 
-    expect(find.byType(TypingIndicator), findsOneWidget);
+    expect(find.byType(NovaThinkingIndicator), findsOneWidget);
+    expect(find.text('NOVA está pensando…'), findsOneWidget);
+  });
+
+  testWidgets('deja de mostrar a NOVA pensando cuando llega el primer texto',
+      (tester) async {
+    await pumpBubble(
+      tester,
+      const ChatMessage.assistant(id: '1', text: 'Hola', isStreaming: true),
+    );
+
+    expect(find.byType(NovaThinkingIndicator), findsNothing);
+    expect(find.text('Hola ▍'), findsOneWidget);
   });
 
   test('la ruta de "Cómo llegar" apunta a las coordenadas del lugar', () {

@@ -21,22 +21,31 @@ abstract interface class PlacesRemoteDataSource {
   });
 }
 
-/// Consulta OpenStreetMap a través de Overpass. Si un servidor falla o está
-/// saturado, prueba con el siguiente.
+/// Consulta OpenStreetMap a través de Overpass.
+///
+/// Los servidores públicos a veces se cuelgan o rechazan peticiones. En lugar
+/// de probarlos en fila (un servidor caído consumiría toda la espera), se
+/// escalonan: si el primero no respondió tras [hedgeDelay] se lanza también el
+/// siguiente, y se usa la primera respuesta válida.
 class OverpassPlacesDataSource implements PlacesRemoteDataSource {
   OverpassPlacesDataSource(
     this._client, {
     List<Uri>? endpoints,
-    // Si un servidor está saturado conviene pasar pronto al siguiente.
-    this.timeout = const Duration(seconds: 8),
+    this.timeout = const Duration(seconds: 15),
+    this.hedgeDelay = const Duration(seconds: 2),
   }) : _endpoints = endpoints ?? AppConfig.overpassEndpoints;
 
   /// Elementos que se piden por consulta antes de ordenar por distancia.
   static const maxElements = 200;
 
+  /// La política de uso de Overpass pide identificar la app y un contacto.
+  static const userAgent =
+      'NOVA-AI/0.1 (+https://github.com/VMichael1999/flutter-ios-demo)';
+
   final http.Client _client;
   final List<Uri> _endpoints;
   final Duration timeout;
+  final Duration hedgeDelay;
 
   @override
   Future<List<PlaceModel>> fetchNearby({
@@ -44,7 +53,7 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
     required PlaceCategory category,
     required int radiusMeters,
     String? name,
-  }) async {
+  }) {
     final query = buildQuery(
       center: center,
       category: category,
@@ -52,30 +61,50 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
       name: name,
     );
 
-    Object? lastError;
-    for (final endpoint in _endpoints) {
-      try {
-        final response = await _client
-            .post(
-              endpoint,
-              // Los navegadores no permiten cambiar el User-Agent.
-              headers: kIsWeb ? null : const {'User-Agent': 'NOVA-AI/0.1'},
-              body: {'data': query},
-            )
-            .timeout(timeout);
-        if (response.statusCode != 200) {
-          lastError = 'HTTP ${response.statusCode} en $endpoint';
-          continue;
+    final result = Completer<List<PlaceModel>>();
+    final errors = <Object>[];
+    var pending = _endpoints.length;
+
+    for (var i = 0; i < _endpoints.length; i++) {
+      final endpoint = _endpoints[i];
+      Future<void>.delayed(hedgeDelay * i, () async {
+        try {
+          if (result.isCompleted) return;
+          final places = await _request(endpoint, query);
+          if (!result.isCompleted) result.complete(places);
+        } catch (error) {
+          debugPrint('Overpass falló en $endpoint: $error');
+          errors.add(error);
+        } finally {
+          pending--;
+          if (pending == 0 && !result.isCompleted) {
+            result.completeError(
+              PlacesFailure(
+                'No se pudo consultar el servicio de lugares. '
+                'Inténtalo de nuevo en unos minutos.',
+                cause: errors.isEmpty ? null : errors.last,
+              ),
+            );
+          }
         }
-        return _parse(utf8.decode(response.bodyBytes));
-      } catch (error) {
-        lastError = error;
-      }
+      });
     }
-    throw PlacesFailure(
-      'No se pudo consultar el servicio de lugares. Inténtalo de nuevo en unos minutos.',
-      cause: lastError,
-    );
+    return result.future;
+  }
+
+  Future<List<PlaceModel>> _request(Uri endpoint, String query) async {
+    final response = await _client
+        .post(
+          endpoint,
+          // Los navegadores no permiten cambiar el User-Agent.
+          headers: kIsWeb ? null : const {'User-Agent': userAgent},
+          body: {'data': query},
+        )
+        .timeout(timeout);
+    if (response.statusCode != 200) {
+      throw http.ClientException('HTTP ${response.statusCode}', endpoint);
+    }
+    return _parse(utf8.decode(response.bodyBytes));
   }
 
   static List<PlaceModel> _parse(String body) {
