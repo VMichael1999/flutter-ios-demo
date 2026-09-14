@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/widgets/nova_mark.dart';
+import 'app_colors.dart';
+import 'app_shapes.dart';
 
 /// Design System de NOVA: papel cálido, tinta y un solo acento violeta.
 ///
 /// Los titulares usan una serif editorial y el texto corrido la fuente del
 /// sistema, para que la app se lea como algo hecho a mano y no como una
-/// plantilla genérica.
+/// plantilla genérica. Los colores viven en `app_colors.dart`.
 abstract final class AppTheme {
-  static const seedColor = NovaBrand.violet;
+  static const seedColor = AppColors.violet;
   static const displayFont = 'DMSerifDisplay';
 
   static ThemeData light() => _build(
     ColorScheme.fromSeed(seedColor: seedColor).copyWith(
-      primary: const Color(0xFF5B3FE0),
-      onPrimary: Colors.white,
-      primaryContainer: const Color(0xFFE7E1FF),
-      onPrimaryContainer: const Color(0xFF2A1A7A),
-      tertiary: NovaBrand.amber,
-      onTertiary: NovaBrand.ink,
-      surface: NovaBrand.paper,
-      onSurface: NovaBrand.ink,
-      onSurfaceVariant: const Color(0xFF67636C),
-      surfaceContainerLowest: Colors.white,
-      surfaceContainerLow: const Color(0xFFFBF9F5),
-      surfaceContainer: const Color(0xFFF0ECE5),
-      surfaceContainerHigh: const Color(0xFFEAE5DC),
-      surfaceContainerHighest: const Color(0xFFE3DDD2),
-      outline: const Color(0xFFB3ACA2),
-      outlineVariant: const Color(0xFFE2DCD2),
+      primary: LightPalette.primary,
+      onPrimary: LightPalette.onPrimary,
+      primaryContainer: LightPalette.primaryContainer,
+      onPrimaryContainer: LightPalette.onPrimaryContainer,
+      tertiary: LightPalette.tertiary,
+      onTertiary: LightPalette.onTertiary,
+      surface: LightPalette.surface,
+      onSurface: LightPalette.onSurface,
+      onSurfaceVariant: LightPalette.onSurfaceVariant,
+      surfaceContainerLowest: LightPalette.surfaceContainerLowest,
+      surfaceContainerLow: LightPalette.surfaceContainerLow,
+      surfaceContainer: LightPalette.surfaceContainer,
+      surfaceContainerHigh: LightPalette.surfaceContainerHigh,
+      surfaceContainerHighest: LightPalette.surfaceContainerHighest,
+      outline: LightPalette.outline,
+      outlineVariant: LightPalette.outlineVariant,
     ),
   );
 
@@ -37,22 +38,22 @@ abstract final class AppTheme {
       seedColor: seedColor,
       brightness: Brightness.dark,
     ).copyWith(
-      primary: const Color(0xFFA08CFF),
-      onPrimary: const Color(0xFF1C1450),
-      primaryContainer: const Color(0xFF2D2560),
-      onPrimaryContainer: const Color(0xFFE7E1FF),
-      tertiary: const Color(0xFFFFC76E),
-      onTertiary: NovaBrand.ink,
-      surface: const Color(0xFF141318),
-      onSurface: const Color(0xFFF1EEE8),
-      onSurfaceVariant: const Color(0xFFA7A2AC),
-      surfaceContainerLowest: const Color(0xFF1A191F),
-      surfaceContainerLow: const Color(0xFF1D1C22),
-      surfaceContainer: const Color(0xFF222127),
-      surfaceContainerHigh: const Color(0xFF29282F),
-      surfaceContainerHighest: const Color(0xFF312F37),
-      outline: const Color(0xFF5A5660),
-      outlineVariant: const Color(0xFF34323A),
+      primary: DarkPalette.primary,
+      onPrimary: DarkPalette.onPrimary,
+      primaryContainer: DarkPalette.primaryContainer,
+      onPrimaryContainer: DarkPalette.onPrimaryContainer,
+      tertiary: DarkPalette.tertiary,
+      onTertiary: DarkPalette.onTertiary,
+      surface: DarkPalette.surface,
+      onSurface: DarkPalette.onSurface,
+      onSurfaceVariant: DarkPalette.onSurfaceVariant,
+      surfaceContainerLowest: DarkPalette.surfaceContainerLowest,
+      surfaceContainerLow: DarkPalette.surfaceContainerLow,
+      surfaceContainer: DarkPalette.surfaceContainer,
+      surfaceContainerHigh: DarkPalette.surfaceContainerHigh,
+      surfaceContainerHighest: DarkPalette.surfaceContainerHighest,
+      outline: DarkPalette.outline,
+      outlineVariant: DarkPalette.outlineVariant,
     ),
   );
 
@@ -76,10 +77,9 @@ abstract final class AppTheme {
       headlineSmall: display(text.headlineSmall),
     );
 
-    final fieldRadius = BorderRadius.circular(18);
     OutlineInputBorder fieldBorder(Color color, [double width = 1]) =>
         OutlineInputBorder(
-          borderRadius: fieldRadius,
+          borderRadius: BorderRadius.circular(AppRadii.medium),
           borderSide: BorderSide(color: color, width: width),
         );
 
@@ -114,7 +114,7 @@ abstract final class AppTheme {
             fontWeight: FontWeight.w600,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadii.button),
           ),
         ),
       ),

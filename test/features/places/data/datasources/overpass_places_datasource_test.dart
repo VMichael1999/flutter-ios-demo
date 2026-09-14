@@ -63,26 +63,28 @@ void main() {
     return [for (final place in places) place.name];
   }
 
-  test('envía la consulta de la categoría y el radio identificando la app',
-      () async {
-    late http.Request sent;
-    final client = MockClient((request) async {
-      sent = request;
-      return jsonResponse(overpassBody);
-    });
+  test(
+    'envía la consulta de la categoría y el radio identificando la app',
+    () async {
+      late http.Request sent;
+      final client = MockClient((request) async {
+        sent = request;
+        return jsonResponse(overpassBody);
+      });
 
-    await dataSourceWith(client).fetchNearby(
-      center: testCenter,
-      category: PlaceCategory.pharmacy,
-      radiusMeters: 5000,
-    );
+      await dataSourceWith(client).fetchNearby(
+        center: testCenter,
+        category: PlaceCategory.pharmacy,
+        radiusMeters: 5000,
+      );
 
-    final query = Uri.decodeQueryComponent(sent.body);
-    expect(query, contains('nwr["amenity"="pharmacy"]'));
-    expect(query, contains('around:5000,-12.1211,-77.0297'));
-    expect(query, contains('[out:json]'));
-    expect(sent.headers['User-Agent'], OverpassPlacesDataSource.userAgent);
-  });
+      final query = Uri.decodeQueryComponent(sent.body);
+      expect(query, contains('nwr["amenity"="pharmacy"]'));
+      expect(query, contains('around:5000,-12.1211,-77.0297'));
+      expect(query, contains('[out:json]'));
+      expect(sent.headers['User-Agent'], OverpassPlacesDataSource.userAgent);
+    },
+  );
 
   test('busca un local por nombre filtrando en el dispositivo', () async {
     late String query;
@@ -100,17 +102,20 @@ void main() {
 
     // Sin expresión regular en el servidor, que es lenta y admite inyecciones.
     expect(query, isNot(contains('"name"')));
-    expect(query, contains('out center ${OverpassPlacesDataSource.maxElementsByName}'));
+    expect(
+      query,
+      contains('out center ${OverpassPlacesDataSource.maxElementsByName}'),
+    );
     expect(places.map((p) => p.name), ['Chifa Miraflores']);
   });
 
   test('devuelve solo los lugares con nombre y coordenadas', () async {
     final client = MockClient((_) async => jsonResponse(overpassBody));
 
-    expect(
-      await fetchNames(dataSourceWith(client)),
-      ['Chifa Miraflores', 'Antigua Bodega Dalmacia'],
-    );
+    expect(await fetchNames(dataSourceWith(client)), [
+      'Chifa Miraflores',
+      'Antigua Bodega Dalmacia',
+    ]);
   });
 
   test('usa otro servidor si el primero está saturado', () async {
@@ -127,30 +132,32 @@ void main() {
     expect(names, hasLength(2));
   });
 
-  test('no espera a un servidor colgado: usa el primero que responde',
-      () async {
-    final requested = <Uri>[];
-    final client = MockClient((request) async {
-      requested.add(request.url);
-      if (request.url == primary) {
-        // Nunca responde a tiempo, como overpass.private.coffee.
-        await Future<void>.delayed(const Duration(seconds: 10));
-      }
-      return jsonResponse(overpassBody);
-    });
-    final dataSource = dataSourceWith(
-      client,
-      endpoints: [primary, mirror],
-      hedgeDelay: const Duration(milliseconds: 50),
-    );
+  test(
+    'no espera a un servidor colgado: usa el primero que responde',
+    () async {
+      final requested = <Uri>[];
+      final client = MockClient((request) async {
+        requested.add(request.url);
+        if (request.url == primary) {
+          // Nunca responde a tiempo, como overpass.private.coffee.
+          await Future<void>.delayed(const Duration(seconds: 10));
+        }
+        return jsonResponse(overpassBody);
+      });
+      final dataSource = dataSourceWith(
+        client,
+        endpoints: [primary, mirror],
+        hedgeDelay: const Duration(milliseconds: 50),
+      );
 
-    final stopwatch = Stopwatch()..start();
-    final names = await fetchNames(dataSource);
+      final stopwatch = Stopwatch()..start();
+      final names = await fetchNames(dataSource);
 
-    expect(names, hasLength(2));
-    expect(requested, [primary, mirror]);
-    expect(stopwatch.elapsed, lessThan(const Duration(seconds: 1)));
-  });
+      expect(names, hasLength(2));
+      expect(requested, [primary, mirror]);
+      expect(stopwatch.elapsed, lessThan(const Duration(seconds: 1)));
+    },
+  );
 
   test('no lanza el siguiente servidor si el primero ya respondió', () async {
     final requested = <Uri>[];

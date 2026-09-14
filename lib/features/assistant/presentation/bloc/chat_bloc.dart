@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/config/app_config.dart';
+import '../../../../core/strings/strings.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../history/domain/entities/conversation.dart';
 import '../../../history/domain/repositories/conversation_repository.dart';
@@ -75,15 +75,13 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     );
 
     // Una foto sin texto también es una pregunta válida.
-    final prompt = text.isEmpty ? AppConfig.defaultImagePrompt : text;
+    final prompt = text.isEmpty ? AiPrompts.defaultImagePrompt : text;
     _replySubscription = _sendMessage(prompt, attachment: attachment).listen(
       (chunk) => add(_ChatChunkReceived(chunk)),
       onError:
           (Object error) => add(
             _ChatReplyFailed(
-              error is AiFailure
-                  ? error.message
-                  : 'No pude generar una respuesta.',
+              error is AiFailure ? error.message : ErrorStrings.aiNoReply,
             ),
           ),
       onDone: () => add(const _ChatReplyCompleted()),
@@ -165,7 +163,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       emit(
         state.copyWith(
           status: ChatStatus.failure,
-          errorMessage: 'No encontré esa conversación en el historial.',
+          errorMessage: HistoryStrings.notFound,
         ),
       );
       return;

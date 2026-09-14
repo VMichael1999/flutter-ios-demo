@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/strings/app_strings.dart';
+import '../../../../core/strings/history_strings.dart';
+import '../../../../core/theme/app_shapes.dart';
 import '../../../../core/utils/dates.dart';
 import '../../../../shared/widgets/nova_logo.dart';
 import '../../../assistant/presentation/pages/chat_page.dart';
@@ -63,12 +66,12 @@ class _HistoryPageState extends State<HistoryPage> {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: const Text('Conversación eliminada'),
+          content: const Text(HistoryStrings.deleted),
           action:
               conversation == null
                   ? null
                   : SnackBarAction(
-                    label: 'Deshacer',
+                    label: AppStrings.undo,
                     onPressed: () => widget.conversations.save(conversation),
                   ),
         ),
@@ -83,7 +86,7 @@ class _HistoryPageState extends State<HistoryPage> {
     final now = widget.clock();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Historial')),
+      appBar: AppBar(title: const Text(AppStrings.history)),
       body: SafeArea(
         child: switch (items) {
           null => const Center(child: CircularProgressIndicator()),
@@ -92,8 +95,7 @@ class _HistoryPageState extends State<HistoryPage> {
             padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
             children: [
               Text(
-                'Toca una conversación para seguirla. Desliza a la '
-                'izquierda para borrarla.',
+                HistoryStrings.hint,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -123,7 +125,7 @@ class _HistoryPageState extends State<HistoryPage> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
                         color: scheme.errorContainer,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(AppRadii.medium),
                       ),
                       child: Icon(
                         Icons.delete_outline_rounded,
@@ -165,14 +167,13 @@ class _EmptyHistory extends StatelessWidget {
             const NovaLogo(size: 64),
             const SizedBox(height: 20),
             Text(
-              'Aún no hay conversaciones',
+              HistoryStrings.emptyTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Lo que hables con NOVA, escribiendo o por voz, se guardará '
-              'aquí.',
+              HistoryStrings.emptySubtitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

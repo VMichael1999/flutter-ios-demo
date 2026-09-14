@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/app_config.dart';
+import '../../../../core/strings/app_strings.dart';
+import '../../../../core/strings/places_strings.dart';
 import '../../../../core/utils/geo.dart';
 import '../../../places/domain/entities/place.dart';
 import '../../../places/domain/entities/place_category.dart';
 
 /// Ruta en Google Maps hasta [place] (web, Android e iOS).
-Uri directionsUri(Place place) => Uri.https('www.google.com', '/maps/dir/', {
-  'api': '1',
-  'destination': '${place.location.latitude},${place.location.longitude}',
-});
+Uri directionsUri(Place place) => Uri.parse(AppConfig.directionsUrl).replace(
+  queryParameters: {
+    'api': '1',
+    'destination': '${place.location.latitude},${place.location.longitude}',
+  },
+);
 
 Future<void> openDirections(Place place) async {
   await launchUrl(directionsUri(place), mode: LaunchMode.externalApplication);
@@ -74,7 +79,7 @@ class PlaceCard extends StatelessWidget {
                   backgroundColor: scheme.primary,
                   child: Text(
                     '$number',
-                    semanticsLabel: 'Punto $number del mapa',
+                    semanticsLabel: PlacesStrings.cardNumberLabel(number),
                     style: theme.textTheme.titleSmall?.copyWith(
                       color: scheme.onPrimary,
                       fontWeight: FontWeight.w700,
@@ -115,7 +120,7 @@ class PlaceCard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Cómo llegar',
+                tooltip: AppStrings.directions,
                 icon: const Icon(Icons.directions_outlined),
                 onPressed: onDirections,
               ),

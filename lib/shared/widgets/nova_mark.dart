@@ -1,21 +1,17 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
-/// Colores fijos de la marca NOVA: no cambian con el tema claro u oscuro.
-abstract final class NovaBrand {
-  static const ink = Color(0xFF1C1B22);
-  static const violet = Color(0xFF7B61FF);
-  static const amber = Color(0xFFFFB547);
-  static const paper = Color(0xFFF5F2EC);
-}
+import '../../core/theme/app_colors.dart';
 
 /// La cara de NOVA: una cabeza redonda con antena que mira hacia arriba,
 /// curiosa. Se usa en el logo, en el modo voz y para generar el ícono.
 class NovaMarkPainter extends CustomPainter {
   const NovaMarkPainter({
-    this.head = NovaBrand.violet,
-    this.face = Colors.white,
-    this.pupil = NovaBrand.ink,
-    this.tip = NovaBrand.amber,
+    this.head = AppColors.violet,
+    this.face = AppColors.white,
+    this.pupil = AppColors.ink,
+    this.tip = AppColors.amber,
   });
 
   final Color head;
@@ -68,8 +64,8 @@ class NovaMarkPainter extends CustomPainter {
         width: radius * 0.44,
         height: radius * 0.26,
       ),
-      0.15 * 3.14159,
-      0.7 * 3.14159,
+      0.15 * math.pi,
+      0.7 * math.pi,
       false,
       Paint()
         ..color = face

@@ -2,6 +2,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../../../core/strings/ai_prompts.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_message.dart';
@@ -19,7 +20,7 @@ class FirebaseAiDataSource implements AiRemoteDataSource {
           model ??
           FirebaseAI.googleAI().generativeModel(
             model: AppConfig.geminiModel,
-            systemInstruction: Content.system(AppConfig.systemPrompt),
+            systemInstruction: Content.system(AiPrompts.systemPrompt),
             tools: toolbox.tools,
           );
 
@@ -73,7 +74,7 @@ List<Content> historyToContents(List<ChatMessage> messages) {
   for (final message in messages) {
     var text = message.text.trim();
     if (message.isUser && text.isEmpty && message.hasImage) {
-      text = '(Envié una imagen)';
+      text = AiPrompts.imageSentPlaceholder;
     }
     if (text.isEmpty) continue;
 

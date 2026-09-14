@@ -74,8 +74,12 @@ void main() {
       expect(tottus.matchesName('tottus'), isTrue);
       expect(tottus.matchesName('HIPERMERCADOS'), isTrue);
       expect(
-        const PlaceModel(id: '1', name: 'Café Tostado', latitude: 0, longitude: 0)
-            .matchesName('cafe  tostado'),
+        const PlaceModel(
+          id: '1',
+          name: 'Café Tostado',
+          latitude: 0,
+          longitude: 0,
+        ).matchesName('cafe  tostado'),
         isTrue,
       );
     });

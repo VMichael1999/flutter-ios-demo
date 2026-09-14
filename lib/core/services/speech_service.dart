@@ -6,6 +6,7 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 import '../errors/failures.dart';
+import '../strings/error_strings.dart';
 
 /// Lo que se va reconociendo mientras la persona habla.
 class SpeechUpdate {
@@ -111,20 +112,12 @@ class SpeechToTextService implements SpeechService {
         debugPrint('Voz: la preparación del reconocedor no terminó');
         _fail(
           session,
-          const SpeechFailure(
-            'No pude activar el reconocimiento de voz. Inténtalo otra vez.',
-          ),
+          const SpeechFailure(ErrorStrings.speechCouldNotActivate),
         );
       }
     });
     if (!await _initialize()) {
-      _fail(
-        session,
-        const SpeechFailure(
-          'No puedo usar el micrófono. Revisa que NOVA tenga permiso para '
-          'grabar audio.',
-        ),
-      );
+      _fail(session, const SpeechFailure(ErrorStrings.speechNoMicrophone));
       return;
     }
     if (identical(_session, session)) await _listen(session);
@@ -137,12 +130,7 @@ class SpeechToTextService implements SpeechService {
     _startWatchdog = Timer(_startTimeout, () {
       if (attempt != _attempt || _isListening) return;
       debugPrint('Voz: el reconocedor no empezó a escuchar');
-      _fail(
-        session,
-        const SpeechFailure(
-          'No pude activar el reconocimiento de voz. Inténtalo otra vez.',
-        ),
-      );
+      _fail(session, const SpeechFailure(ErrorStrings.speechCouldNotActivate));
       _speech.cancel();
     });
 
@@ -163,7 +151,7 @@ class SpeechToTextService implements SpeechService {
       );
     } catch (error) {
       debugPrint('Voz: no se pudo empezar a escuchar: $error');
-      _fail(session, const SpeechFailure('No pude empezar a escucharte.'));
+      _fail(session, const SpeechFailure(ErrorStrings.speechCouldNotStart));
     }
   }
 
@@ -267,14 +255,7 @@ class SpeechToTextService implements SpeechService {
           _localeId = null;
           _retry(session);
         } else {
-          _fail(
-            session,
-            const SpeechFailure(
-              'Tu teléfono no tiene el reconocimiento de voz en español. '
-              'Descárgalo en Ajustes › Google › Voz › Reconocimiento sin '
-              'conexión.',
-            ),
-          );
+          _fail(session, const SpeechFailure(ErrorStrings.speechNoSpanish));
         }
       case 'error_client' || 'error_busy' || 'error_server_disconnected'
           when !_retried:
@@ -286,22 +267,14 @@ class SpeechToTextService implements SpeechService {
           'not-allowed' ||
           'service-not-allowed' ||
           'audio-capture':
-        _fail(
-          session,
-          const SpeechFailure('NOVA necesita permiso para usar el micrófono.'),
-        );
+        _fail(session, const SpeechFailure(ErrorStrings.speechPermission));
       case 'error_network' ||
           'error_network_timeout' ||
           'error_server' ||
           'network':
-        _fail(
-          session,
-          const SpeechFailure(
-            'El reconocimiento de voz necesita conexión a internet.',
-          ),
-        );
+        _fail(session, const SpeechFailure(ErrorStrings.speechNeedsInternet));
       default:
-        _fail(session, const SpeechFailure('No pude entenderte bien.'));
+        _fail(session, const SpeechFailure(ErrorStrings.speechNotUnderstood));
     }
   }
 

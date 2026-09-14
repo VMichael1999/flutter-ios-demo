@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 
 import '../errors/failures.dart';
+import '../strings/error_strings.dart';
 import '../utils/geo.dart';
 
 abstract interface class LocationService {
@@ -19,7 +20,7 @@ class GeolocatorLocationService implements LocationService {
   Future<GeoPoint> getCurrentLocation() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
       throw const LocationFailure(
-        'La ubicación del dispositivo está desactivada. Actívala e inténtalo de nuevo.',
+        ErrorStrings.locationDisabled,
         reason: LocationFailureReason.serviceDisabled,
       );
     }
@@ -31,12 +32,12 @@ class GeolocatorLocationService implements LocationService {
     switch (permission) {
       case LocationPermission.denied:
         throw const LocationFailure(
-          'No diste permiso para usar tu ubicación.',
+          ErrorStrings.locationDenied,
           reason: LocationFailureReason.permissionDenied,
         );
       case LocationPermission.deniedForever:
         throw const LocationFailure(
-          'El permiso de ubicación está bloqueado. Actívalo en los ajustes.',
+          ErrorStrings.locationBlocked,
           reason: LocationFailureReason.permissionDeniedForever,
         );
       case LocationPermission.whileInUse ||
@@ -54,7 +55,7 @@ class GeolocatorLocationService implements LocationService {
       );
       return GeoPoint(position.latitude, position.longitude);
     } catch (error) {
-      throw LocationFailure('No se pudo obtener tu ubicación.', cause: error);
+      throw LocationFailure(ErrorStrings.locationUnavailable, cause: error);
     }
   }
 }

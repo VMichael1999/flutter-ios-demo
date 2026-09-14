@@ -1,3 +1,4 @@
+import '../../../core/strings/history_strings.dart';
 import '../../../core/utils/geo.dart';
 import '../../assistant/domain/entities/chat_message.dart';
 import '../../places/domain/entities/place.dart';
@@ -37,7 +38,7 @@ Map<String, Object?> summaryToJson(ConversationSummary summary) => {
 ConversationSummary summaryFromJson(Map<String, Object?> json) =>
     ConversationSummary(
       id: json['id']! as String,
-      title: json['title'] as String? ?? 'Conversación',
+      title: json['title'] as String? ?? HistoryStrings.untitled,
       preview: json['preview'] as String? ?? '',
       updatedAt: DateTime.parse(json['updatedAt']! as String),
       source: _sourceFrom(json['source']),

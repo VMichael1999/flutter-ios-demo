@@ -37,12 +37,13 @@ void main() {
       MaterialApp(
         theme: AppTheme.light(),
         home: BlocProvider(
-          create: (_) => VoiceConversationCubit(
-            speech: speech,
-            textToSpeech: textToSpeech,
-            sendMessage: SendMessage(repository),
-            continuous: false,
-          ),
+          create:
+              (_) => VoiceConversationCubit(
+                speech: speech,
+                textToSpeech: textToSpeech,
+                sendMessage: SendMessage(repository),
+                continuous: false,
+              ),
           child: const VoicePage(),
         ),
       ),
@@ -50,8 +51,9 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('empieza a escuchar al abrir y muestra lo que oye',
-      (tester) async {
+  testWidgets('empieza a escuchar al abrir y muestra lo que oye', (
+    tester,
+  ) async {
     await pumpVoice(tester);
 
     expect(speech.listenCalls, 1);
@@ -64,14 +66,15 @@ void main() {
     expect(find.text('“Busca farmacias”'), findsOneWidget);
   });
 
-  testWidgets('al terminar de hablar NOVA responde en texto y en voz',
-      (tester) async {
+  testWidgets('al terminar de hablar NOVA responde en texto y en voz', (
+    tester,
+  ) async {
     when(
-      () => repository.streamReply(
-        'Hola',
-        attachment: any(named: 'attachment'),
-      ),
-    ).thenAnswer((_) => Stream.value(const AiTextChunk('¡Hola! Soy **NOVA**.')));
+      () =>
+          repository.streamReply('Hola', attachment: any(named: 'attachment')),
+    ).thenAnswer(
+      (_) => Stream.value(const AiTextChunk('¡Hola! Soy **NOVA**.')),
+    );
     await pumpVoice(tester);
 
     speech.say('Hola');
@@ -86,8 +89,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('si no escucha nada invita a intentarlo de nuevo',
-      (tester) async {
+  testWidgets('si no escucha nada invita a intentarlo de nuevo', (
+    tester,
+  ) async {
     await pumpVoice(tester);
 
     await speech.finish();

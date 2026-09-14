@@ -2,12 +2,15 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/strings/chat_strings.dart';
+import '../../../../core/theme/app_colors.dart';
+
 /// NOVA pensando: un personaje animado que flota, parpadea y hace burbujas de
 /// pensamiento mientras llega la respuesta.
 class NovaThinkingIndicator extends StatefulWidget {
   const NovaThinkingIndicator({
     super.key,
-    this.label = 'NOVA está pensando…',
+    this.label = ChatStrings.thinking,
     this.size = 64,
   });
 
@@ -140,7 +143,7 @@ class _NovaMascotPainter extends CustomPainter {
         width: headRadius * (1.5 - bob * 0.08),
         height: unit * 0.6,
       ),
-      Paint()..color = Colors.black.withValues(alpha: 0.18 - bob * 0.04),
+      Paint()..color = AppColors.black.withValues(alpha: 0.18 - bob * 0.04),
     );
   }
 
@@ -185,7 +188,7 @@ class _NovaMascotPainter extends CustomPainter {
 
     // Ojos mirando hacia arriba, como quien piensa, con parpadeo.
     final blink = _blinkAmount(progress);
-    final pupil = Color.lerp(primary, Colors.black, 0.55)!;
+    final pupil = Color.lerp(primary, AppColors.black, 0.55)!;
     for (final side in const [-1, 1]) {
       final eye = head.translate(side * headRadius * 0.38, -headRadius * 0.12);
       canvas.drawOval(

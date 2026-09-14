@@ -12,6 +12,8 @@ import '../../../assistant/domain/entities/chat_message.dart';
 import '../../../assistant/domain/usecases/send_message.dart';
 import '../../../history/domain/entities/conversation.dart';
 import '../../../history/domain/repositories/conversation_repository.dart';
+import '../../../../core/strings/error_strings.dart';
+import '../../../../core/strings/voice_strings.dart';
 import '../../domain/speakable_text.dart';
 
 part 'voice_state.dart';
@@ -86,7 +88,9 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
           VoiceState(
             status: VoiceStatus.failure,
             errorMessage:
-                error is SpeechFailure ? error.message : 'No pude escucharte.',
+                error is SpeechFailure
+                    ? error.message
+                    : ErrorStrings.speechGeneric,
           ),
         );
       },
@@ -98,9 +102,7 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
           _emit(
             const VoiceState(
               status: VoiceStatus.failure,
-              errorMessage:
-                  'No te escuché. Toca el micrófono y vuelve a '
-                  'intentarlo.',
+              errorMessage: VoiceStrings.heardNothing,
             ),
           );
         } else {
@@ -137,9 +139,7 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
           state.copyWith(
             status: VoiceStatus.failure,
             errorMessage:
-                error is AiFailure
-                    ? error.message
-                    : 'No pude generar una respuesta.',
+                error is AiFailure ? error.message : ErrorStrings.aiNoReply,
           ),
         );
       },
@@ -169,9 +169,7 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
         _emit(
           state.copyWith(
             status: VoiceStatus.failure,
-            errorMessage:
-                'No pude leer la respuesta en voz alta. Revisa el volumen '
-                'del teléfono; la respuesta está escrita abajo.',
+            errorMessage: VoiceStrings.readAloudFailed,
           ),
         );
       }

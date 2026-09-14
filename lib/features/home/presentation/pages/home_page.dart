@@ -4,31 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/strings/strings.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_shapes.dart';
+import '../../../../core/utils/dates.dart';
+import '../../../../shared/widgets/nova_logo.dart';
+import '../../../../shared/widgets/pressable.dart';
+import '../../../assistant/presentation/pages/chat_page.dart';
 import '../../../history/domain/entities/conversation.dart';
 import '../../../history/domain/repositories/conversation_repository.dart';
 import '../../../history/presentation/widgets/conversation_tile.dart';
-import '../../../../shared/widgets/nova_logo.dart';
-import '../../../../shared/widgets/nova_mark.dart';
-import '../../../../shared/widgets/pressable.dart';
-import '../../../assistant/presentation/pages/chat_page.dart';
-
-/// Saludo según la hora del día.
-String greetingFor(DateTime time) => switch (time.hour) {
-  < 5 => 'Buenas noches',
-  < 12 => 'Buenos días',
-  < 19 => 'Buenas tardes',
-  _ => 'Buenas noches',
-};
-
-/// Fecha corta en español, por ejemplo "dom 13 sep".
-String shortSpanishDate(DateTime date) {
-  const days = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
-  const months = [
-    'ene', 'feb', 'mar', 'abr', 'may', 'jun', //
-    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
-  ];
-  return '${days[date.weekday - 1]} ${date.day} ${months[date.month - 1]}';
-}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, this.clock = DateTime.now, this.conversations});
@@ -104,18 +89,17 @@ class _HomePageState extends State<HomePage> {
   void _openLocation() => context.push(
     AppRoutes.chat,
     extra: const ChatLaunchOptions(
-      draft: ChatDraft(prefix: 'Busca ', suffix: ' cerca de mí'),
+      draft: ChatDraft(
+        prefix: HomeStrings.locationDraftPrefix,
+        suffix: HomeStrings.locationDraftSuffix,
+      ),
     ),
   );
 
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text('$feature estará disponible en próximas versiones.'),
-        ),
-      );
+      ..showSnackBar(SnackBar(content: Text(AppStrings.comingSoon(feature))));
   }
 
   @override
@@ -123,6 +107,9 @@ class _HomePageState extends State<HomePage> {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final now = widget.clock();
+    final sectionStyle = theme.textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w600,
+    );
 
     return Scaffold(
       body: SafeArea(
@@ -133,7 +120,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 const NovaLogo(size: 34),
                 const SizedBox(width: 10),
-                Text('NOVA', style: theme.textTheme.headlineSmall),
+                Text(AppStrings.brand, style: theme.textTheme.headlineSmall),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -147,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Historial',
+                  tooltip: AppStrings.history,
                   onPressed: _openHistory,
                   icon: const Icon(Icons.history_rounded),
                 ),
@@ -163,16 +150,16 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 4),
             Text.rich(
               TextSpan(
-                text: '¿Qué hacemos ',
+                text: HomeStrings.headlineStart,
                 children: [
                   TextSpan(
-                    text: 'hoy',
+                    text: HomeStrings.headlineHighlight,
                     style: TextStyle(
                       fontStyle: FontStyle.italic,
                       color: scheme.primary,
                     ),
                   ),
-                  const TextSpan(text: '?'),
+                  const TextSpan(text: HomeStrings.headlineEnd),
                 ],
               ),
               style: theme.textTheme.displaySmall?.copyWith(height: 1.05),
@@ -184,11 +171,11 @@ class _HomePageState extends State<HomePage> {
               textCapitalization: TextCapitalization.sentences,
               onSubmitted: (_) => _submitPrompt(),
               decoration: InputDecoration(
-                hintText: 'Pregúntale algo a NOVA…',
+                hintText: HomeStrings.promptHint,
                 suffixIcon: Padding(
                   padding: const EdgeInsets.all(6),
                   child: IconButton.filled(
-                    tooltip: 'Enviar',
+                    tooltip: AppStrings.send,
                     icon: const Icon(Icons.arrow_upward_rounded),
                     onPressed: _submitPrompt,
                   ),
@@ -200,16 +187,11 @@ class _HomePageState extends State<HomePage> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Recientes',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text(HomeStrings.recent, style: sectionStyle),
                   ),
                   TextButton(
                     onPressed: _openHistory,
-                    child: const Text('Ver todo'),
+                    child: const Text(HomeStrings.seeAll),
                   ),
                 ],
               ),
@@ -225,12 +207,7 @@ class _HomePageState extends State<HomePage> {
                 ),
             ],
             const SizedBox(height: 36),
-            Text(
-              'Atajos',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(HomeStrings.shortcuts, style: sectionStyle),
             const SizedBox(height: 12),
             _VoiceCard(onTap: _openVoice),
             const SizedBox(height: 12),
@@ -241,8 +218,8 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: _ShortcutCard(
                       icon: Icons.photo_camera_outlined,
-                      label: 'Cámara',
-                      caption: 'Toma una foto o elige una',
+                      label: HomeStrings.cameraTitle,
+                      caption: HomeStrings.cameraCaption,
                       onTap: _openCamera,
                     ),
                   ),
@@ -250,8 +227,8 @@ class _HomePageState extends State<HomePage> {
                   Expanded(
                     child: _ShortcutCard(
                       icon: Icons.near_me_outlined,
-                      label: 'Ubicación',
-                      caption: 'Lugares cerca de ti',
+                      label: HomeStrings.locationTitle,
+                      caption: HomeStrings.locationCaption,
                       onTap: _openLocation,
                     ),
                   ),
@@ -261,16 +238,16 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
             _ShortcutCard(
               icon: Icons.description_outlined,
-              label: 'Documento',
-              caption: 'Lee y resume un PDF',
-              badge: 'Pronto',
-              onTap: () => _showComingSoon('Documento'),
+              label: HomeStrings.documentTitle,
+              caption: HomeStrings.documentCaption,
+              badge: AppStrings.soon,
+              onTap: () => _showComingSoon(HomeStrings.documentTitle),
             ),
             const SizedBox(height: 28),
             FilledButton.icon(
               onPressed: _openChat,
               icon: const Icon(Icons.chat_bubble_outline),
-              label: const Text('Abrir chat con NOVA'),
+              label: const Text(HomeStrings.openChat),
             ),
           ],
         ),
@@ -293,10 +270,11 @@ class _VoiceCard extends StatelessWidget {
     return Pressable(
       builder:
           (context, onHighlightChanged) => Material(
-            color: NovaBrand.ink,
+            color: AppColors.ink,
             clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadii.extraLarge),
+              // En modo oscuro la tarjeta de tinta se perdería contra el fondo.
               side:
                   isDark
                       ? BorderSide(color: theme.colorScheme.outlineVariant)
@@ -314,16 +292,16 @@ class _VoiceCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Voz',
+                            HomeStrings.voiceTitle,
                             style: theme.textTheme.headlineMedium?.copyWith(
-                              color: NovaBrand.paper,
+                              color: AppColors.paper,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Conversa con NOVA sin escribir',
+                            HomeStrings.voiceCaption,
                             style: theme.textTheme.bodyMedium?.copyWith(
-                              color: NovaBrand.paper.withValues(alpha: 0.72),
+                              color: AppColors.paper.withValues(alpha: 0.72),
                             ),
                           ),
                         ],
@@ -334,12 +312,12 @@ class _VoiceCard extends StatelessWidget {
                       width: 56,
                       height: 56,
                       decoration: const BoxDecoration(
-                        color: NovaBrand.violet,
+                        color: AppColors.violet,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.mic_none_rounded,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 28,
                       ),
                     ),
@@ -396,10 +374,7 @@ class _ShortcutCard extends StatelessWidget {
           (context, onHighlightChanged) => Material(
             color: scheme.surfaceContainerLowest,
             clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: scheme.outlineVariant),
-            ),
+            shape: AppShapes.outlinedCard(scheme),
             child: InkWell(
               onTap: onTap,
               onHighlightChanged: onHighlightChanged,
@@ -435,7 +410,9 @@ class _ShortcutCard extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: scheme.surfaceContainerHigh,
-                                borderRadius: BorderRadius.circular(99),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadii.pill,
+                                ),
                               ),
                               child: Text(
                                 badge,

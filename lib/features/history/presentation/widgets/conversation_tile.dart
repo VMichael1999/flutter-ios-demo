@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/strings/history_strings.dart';
+import '../../../../core/theme/app_shapes.dart';
 import '../../../../core/utils/dates.dart';
 import '../../../../shared/widgets/pressable.dart';
 import '../../domain/entities/conversation.dart';
@@ -28,10 +30,7 @@ class ConversationTile extends StatelessWidget {
           (context, onHighlightChanged) => Material(
             color: scheme.surfaceContainerLowest,
             clipBehavior: Clip.antiAlias,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-              side: BorderSide(color: scheme.outlineVariant),
-            ),
+            shape: AppShapes.outlinedCard(scheme, radius: AppRadii.medium),
             child: InkWell(
               onTap: onTap,
               onHighlightChanged: onHighlightChanged,
@@ -45,7 +44,10 @@ class ConversationTile extends StatelessWidget {
                           : Icons.chat_bubble_outline_rounded,
                       size: 22,
                       color: scheme.primary,
-                      semanticLabel: isVoice ? 'Por voz' : 'Por chat',
+                      semanticLabel:
+                          isVoice
+                              ? HistoryStrings.byVoice
+                              : HistoryStrings.byChat,
                     ),
                     const SizedBox(width: 12),
                     Expanded(

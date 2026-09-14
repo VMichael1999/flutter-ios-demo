@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nova_ai/core/theme/app_colors.dart';
 import 'package:nova_ai/shared/widgets/nova_mark.dart';
 
 const _size = 1024.0;
@@ -16,7 +17,7 @@ void main() {
     // iOS y web: cuadro de tinta sin transparencia.
     await _render(
       'assets/icon/app_icon.png',
-      background: NovaBrand.ink,
+      background: AppColors.ink,
       markScale: 0.7,
     );
     // Android adaptativo: solo la cara, dentro de la zona segura (66 %).
@@ -41,9 +42,10 @@ Future<void> _render(
   canvas.translate((_size - markSize) / 2, (_size - markSize) / 2);
   const NovaMarkPainter().paint(canvas, Size.square(markSize));
 
-  final image = await recorder
-      .endRecording()
-      .toImage(_size.toInt(), _size.toInt());
+  final image = await recorder.endRecording().toImage(
+    _size.toInt(),
+    _size.toInt(),
+  );
   final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
   File(path)
     ..createSync(recursive: true)

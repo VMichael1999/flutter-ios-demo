@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/strings/strings.dart';
+import '../../../../core/theme/app_shapes.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../shared/widgets/entrance.dart';
 import '../../domain/entities/chat_attachment.dart';
@@ -70,7 +72,7 @@ class ChatInput extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               IconButton(
-                tooltip: 'Adjuntar imagen',
+                tooltip: ChatStrings.attachImage,
                 onPressed: isStreaming ? null : onAttach,
                 icon: const Icon(Icons.add_photo_alternate_outlined),
               ),
@@ -86,10 +88,10 @@ class ChatInput extends StatelessWidget {
                   decoration: InputDecoration(
                     hintText:
                         isListening
-                            ? 'Te escucho…'
+                            ? ChatStrings.listeningHint
                             : attachment == null
-                            ? 'Escribe o dicta a NOVA…'
-                            : 'Pregunta sobre la imagen…',
+                            ? ChatStrings.inputHint
+                            : ChatStrings.inputHintWithImage,
                     suffixIcon:
                         onMicTap == null
                             ? null
@@ -102,7 +104,7 @@ class ChatInput extends StatelessWidget {
                                   isListening
                                       ? IconButton.filledTonal(
                                         key: const ValueKey('listening'),
-                                        tooltip: 'Dejar de dictar',
+                                        tooltip: ChatStrings.stopDictation,
                                         onPressed: onMicTap,
                                         icon: const Icon(
                                           Icons.graphic_eq_rounded,
@@ -110,7 +112,7 @@ class ChatInput extends StatelessWidget {
                                       )
                                       : IconButton(
                                         key: const ValueKey('mic'),
-                                        tooltip: 'Dictar',
+                                        tooltip: ChatStrings.dictate,
                                         onPressed:
                                             isStreaming ? null : onMicTap,
                                         icon: const Icon(
@@ -131,13 +133,13 @@ class ChatInput extends StatelessWidget {
                     isStreaming
                         ? IconButton.filledTonal(
                           key: const ValueKey('stop'),
-                          tooltip: 'Detener',
+                          tooltip: ChatStrings.stop,
                           onPressed: onStop,
                           icon: const Icon(Icons.stop_rounded),
                         )
                         : IconButton.filled(
                           key: const ValueKey('send'),
-                          tooltip: 'Enviar',
+                          tooltip: AppStrings.send,
                           onPressed: onSend,
                           icon: const Icon(Icons.arrow_upward_rounded),
                         ),
@@ -162,20 +164,20 @@ class _AttachmentPreview extends StatelessWidget {
       clipBehavior: Clip.none,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadii.small),
           child: Image.memory(
             attachment.bytes,
             width: 72,
             height: 72,
             fit: BoxFit.cover,
-            semanticLabel: 'Imagen para enviar',
+            semanticLabel: ChatStrings.imageToSend,
           ),
         ),
         Positioned(
           top: -10,
           right: -10,
           child: IconButton.filledTonal(
-            tooltip: 'Quitar imagen',
+            tooltip: ChatStrings.removeImage,
             visualDensity: VisualDensity.compact,
             iconSize: 16,
             onPressed: onRemove,

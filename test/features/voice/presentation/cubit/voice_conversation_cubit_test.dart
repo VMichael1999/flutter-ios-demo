@@ -55,9 +55,10 @@ void main() {
     final cubit = buildCubit(textToSpeech);
     stubReply(
       '¿Qué hora es?',
-      () => Stream.fromIterable(
-        const [AiTextChunk('Son las **tres**'), AiTextChunk('.')],
-      ),
+      () => Stream.fromIterable(const [
+        AiTextChunk('Son las **tres**'),
+        AiTextChunk('.'),
+      ]),
     );
 
     await cubit.startListening();
@@ -102,10 +103,7 @@ void main() {
     expect(cubit.state.errorMessage, contains('No te escuché'));
     expect(speech.listenCalls, 1);
     verifyNever(
-      () => repository.streamReply(
-        any(),
-        attachment: any(named: 'attachment'),
-      ),
+      () => repository.streamReply(any(), attachment: any(named: 'attachment')),
     );
   });
 
@@ -133,25 +131,30 @@ void main() {
     expect(cubit.state.errorMessage, 'Sin conexión.');
   });
 
-  test('tocar mientras NOVA habla la interrumpe y no vuelve a escuchar',
-      () async {
-    final textToSpeech = FakeTextToSpeech(holdSpeech: true);
-    final cubit = buildCubit(textToSpeech, continuous: true);
-    stubReply('Cuéntame algo', () => Stream.value(const AiTextChunk('Había')));
+  test(
+    'tocar mientras NOVA habla la interrumpe y no vuelve a escuchar',
+    () async {
+      final textToSpeech = FakeTextToSpeech(holdSpeech: true);
+      final cubit = buildCubit(textToSpeech, continuous: true);
+      stubReply(
+        'Cuéntame algo',
+        () => Stream.value(const AiTextChunk('Había')),
+      );
 
-    await cubit.startListening();
-    speech.say('Cuéntame algo');
-    await speech.finish();
-    await pumpEventQueue();
-    expect(cubit.state.status, VoiceStatus.speaking);
+      await cubit.startListening();
+      speech.say('Cuéntame algo');
+      await speech.finish();
+      await pumpEventQueue();
+      expect(cubit.state.status, VoiceStatus.speaking);
 
-    await cubit.toggle();
-    await pumpEventQueue();
+      await cubit.toggle();
+      await pumpEventQueue();
 
-    expect(textToSpeech.stopCalls, 1);
-    expect(cubit.state.status, VoiceStatus.idle);
-    expect(speech.listenCalls, 1);
-  });
+      expect(textToSpeech.stopCalls, 1);
+      expect(cubit.state.status, VoiceStatus.idle);
+      expect(speech.listenCalls, 1);
+    },
+  );
 
   test('tocar mientras escucha termina la frase', () async {
     final cubit = buildCubit(FakeTextToSpeech());
@@ -196,18 +199,20 @@ void main() {
     );
   });
 
-  test('si la voz del teléfono falla lo dice y deja la respuesta escrita',
-      () async {
-    final cubit = buildCubit(FakeTextToSpeech(fails: true));
-    stubReply('Hola', () => Stream.value(const AiTextChunk('¡Hola!')));
+  test(
+    'si la voz del teléfono falla lo dice y deja la respuesta escrita',
+    () async {
+      final cubit = buildCubit(FakeTextToSpeech(fails: true));
+      stubReply('Hola', () => Stream.value(const AiTextChunk('¡Hola!')));
 
-    await cubit.startListening();
-    speech.say('Hola');
-    await speech.finish();
-    await pumpEventQueue();
+      await cubit.startListening();
+      speech.say('Hola');
+      await speech.finish();
+      await pumpEventQueue();
 
-    expect(cubit.state.status, VoiceStatus.failure);
-    expect(cubit.state.errorMessage, contains('voz alta'));
-    expect(cubit.state.reply, '¡Hola!');
-  });
+      expect(cubit.state.status, VoiceStatus.failure);
+      expect(cubit.state.errorMessage, contains('voz alta'));
+      expect(cubit.state.reply, '¡Hola!');
+    },
+  );
 }

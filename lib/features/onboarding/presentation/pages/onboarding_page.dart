@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/strings/onboarding_strings.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../shared/widgets/entrance.dart';
 
@@ -16,21 +17,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
   static const _slides = [
     _Slide(
       icon: Icons.forum_outlined,
-      title: 'Habla con NOVA',
-      description:
-          'Escribe o habla con naturalidad. NOVA entiende lo que necesitas.',
+      title: OnboardingStrings.talkTitle,
+      description: OnboardingStrings.talkDescription,
     ),
     _Slide(
       icon: Icons.photo_camera_outlined,
-      title: 'Entiende tu mundo',
-      description:
-          'Analiza imágenes, documentos y tu ubicación para responder con contexto.',
+      title: OnboardingStrings.worldTitle,
+      description: OnboardingStrings.worldDescription,
     ),
     _Slide(
       icon: Icons.bolt_outlined,
-      title: 'Acciones reales',
-      description:
-          'Crea recordatorios, guarda notas y encuentra lugares sin cambiar de pantalla.',
+      title: OnboardingStrings.actionsTitle,
+      description: OnboardingStrings.actionsDescription,
     ),
   ];
 
@@ -53,10 +51,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       return;
     }
     // La página se desplaza dentro de la pantalla: curva de ida y vuelta.
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Motion.easeInOut,
-    );
+    _pageController.nextPage(duration: Motion.page, curve: Motion.easeInOut);
   }
 
   @override
@@ -73,7 +68,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: _finish,
-                  child: const Text('Saltar'),
+                  child: const Text(OnboardingStrings.skip),
                 ),
               ),
               Expanded(
@@ -109,7 +104,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _next,
-                child: Text(_isLastPage ? 'Empezar' : 'Siguiente'),
+                child: Text(
+                  _isLastPage
+                      ? OnboardingStrings.start
+                      : OnboardingStrings.next,
+                ),
               ),
             ],
           ),

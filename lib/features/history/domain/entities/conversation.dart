@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/strings/history_strings.dart';
 import '../../../assistant/domain/entities/chat_message.dart';
 
 /// De dónde salió la conversación: el chat escrito o el modo voz.
@@ -45,11 +46,11 @@ class Conversation extends Equatable {
       if (!message.isUser) continue;
       final text = _oneLine(message.text);
       if (text.isNotEmpty) return _shorten(text, 48);
-      if (message.hasImage) return 'Foto';
+      if (message.hasImage) return HistoryStrings.photoTitle;
     }
     return source == ConversationSource.voice
-        ? 'Conversación por voz'
-        : 'Conversación';
+        ? HistoryStrings.untitledVoice
+        : HistoryStrings.untitled;
   }
 
   /// El último mensaje con texto, en una línea y sin formato.

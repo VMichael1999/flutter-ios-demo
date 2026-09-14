@@ -21,7 +21,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('pasa del splash al onboarding y luego a la home', (tester) async {
+  testWidgets('pasa del splash al onboarding y luego a la home', (
+    tester,
+  ) async {
     await tester.pumpWidget(const NovaApp());
     expect(find.text('NOVA AI'), findsOneWidget);
 
@@ -59,8 +61,9 @@ void main() {
     expect(find.text('Habla con NOVA'), findsOneWidget);
   });
 
-  testWidgets('Cámara abre el chat preguntando si usar cámara o galería',
-      (tester) async {
+  testWidgets('Cámara abre el chat preguntando si usar cámara o galería', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -75,28 +78,30 @@ void main() {
     expect(find.text('Elegir de la galería'), findsOneWidget);
   });
 
-  testWidgets('Ubicación abre el chat con "Busca … cerca de mí" por completar',
-      (tester) async {
-    // Pantalla de teléfono (360x800 lógicos), como un Galaxy A03.
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
+  testWidgets(
+    'Ubicación abre el chat con "Busca … cerca de mí" por completar',
+    (tester) async {
+      // Pantalla de teléfono (360x800 lógicos), como un Galaxy A03.
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
 
-    await openHome(tester);
+      await openHome(tester);
 
-    await tester.tap(find.text('Ubicación'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Ubicación'));
+      await tester.pumpAndSettle();
 
-    // La home sigue en el árbol debajo del chat: se busca el campo del chat.
-    final chatField = find.descendant(
-      of: find.byType(ChatPage),
-      matching: find.byType(TextField),
-    );
-    expect(chatField, findsOneWidget);
-    final field = tester.widget<TextField>(chatField);
-    expect(field.controller!.text, 'Busca  cerca de mí');
-    expect(field.controller!.selection.baseOffset, 'Busca '.length);
-    // No se envía nada hasta que el usuario lo complete.
-    expect(find.text('Pregúntame lo que quieras'), findsOneWidget);
-  });
+      // La home sigue en el árbol debajo del chat: se busca el campo del chat.
+      final chatField = find.descendant(
+        of: find.byType(ChatPage),
+        matching: find.byType(TextField),
+      );
+      expect(chatField, findsOneWidget);
+      final field = tester.widget<TextField>(chatField);
+      expect(field.controller!.text, 'Busca  cerca de mí');
+      expect(field.controller!.selection.baseOffset, 'Busca '.length);
+      // No se envía nada hasta que el usuario lo complete.
+      expect(find.text('Pregúntame lo que quieras'), findsOneWidget);
+    },
+  );
 }

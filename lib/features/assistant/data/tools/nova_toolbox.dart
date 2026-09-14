@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/strings/ai_prompts.dart';
 import '../../../../core/utils/geo.dart';
 import '../../../places/domain/entities/place.dart';
 import '../../../places/domain/entities/place_category.dart';
@@ -21,37 +22,29 @@ class NovaToolbox {
   /// Ubicación desde la que se hizo la última búsqueda con resultados.
   GeoPoint? get lastSearchCenter => _foundCenter;
 
-  late final AutoFunctionDeclaration
-  searchNearbyPlaces = AutoFunctionDeclaration(
-    name: searchNearbyPlacesName,
-    description:
-        'Busca lugares cerca de la ubicación actual del usuario y '
-        'devuelve los más cercanos con su distancia en metros. También sirve '
-        'para ubicar un local concreto por su nombre, por ejemplo el que se '
-        'lee en el letrero de una foto.',
-    parameters: {
-      'categoria': Schema.enumString(
-        enumValues: [
-          for (final category in PlaceCategory.values) category.name,
-        ],
-        description: 'Tipo de lugar que busca el usuario.',
-      ),
-      'radioMetros': Schema.integer(
-        description:
-            'Radio máximo de búsqueda en metros. Por defecto '
-            '${AppConfig.nearbyRadiusMeters}.',
-        minimum: SearchNearbyPlaces.minRadiusMeters,
-        maximum: AppConfig.nearbyRadiusMeters,
-      ),
-      'nombre': Schema.string(
-        description:
-            'Nombre del local, si el usuario lo menciona o se lee en '
-            'una imagen.',
-      ),
-    },
-    optionalParameters: const ['radioMetros', 'nombre'],
-    callable: handleSearchNearbyPlaces,
-  );
+  late final AutoFunctionDeclaration searchNearbyPlaces =
+      AutoFunctionDeclaration(
+        name: searchNearbyPlacesName,
+        description: AiPrompts.searchPlacesDescription,
+        parameters: {
+          'categoria': Schema.enumString(
+            enumValues: [
+              for (final category in PlaceCategory.values) category.name,
+            ],
+            description: AiPrompts.categoryDescription,
+          ),
+          'radioMetros': Schema.integer(
+            description: AiPrompts.radiusDescription(
+              AppConfig.nearbyRadiusMeters,
+            ),
+            minimum: SearchNearbyPlaces.minRadiusMeters,
+            maximum: AppConfig.nearbyRadiusMeters,
+          ),
+          'nombre': Schema.string(description: AiPrompts.nameDescription),
+        },
+        optionalParameters: const ['radioMetros', 'nombre'],
+        callable: handleSearchNearbyPlaces,
+      );
 
   List<Tool> get tools => [
     Tool.functionDeclarations([searchNearbyPlaces]),
@@ -74,7 +67,7 @@ class NovaToolbox {
     };
     if (category == null) {
       return {
-        'error': 'Categoría no soportada.',
+        'error': AiPrompts.unsupportedCategory,
         'categoriasDisponibles': [
           for (final category in PlaceCategory.values) category.name,
         ],

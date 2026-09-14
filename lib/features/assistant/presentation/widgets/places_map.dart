@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/config/app_config.dart';
+import '../../../../core/strings/app_strings.dart';
+import '../../../../core/strings/places_strings.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_shapes.dart';
+import '../../../../core/theme/motion.dart';
 import '../../../../core/utils/geo.dart';
 import '../../../places/domain/entities/place.dart';
 import 'place_card.dart';
-
-/// Mapas base de OpenStreetMap: no necesitan clave. Su política de uso pide
-/// identificar la app y mostrar la atribución.
-const _tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const _userAgentPackageName = 'com.vmichael1999.novaai';
 
 LatLng _toLatLng(GeoPoint point) => LatLng(point.latitude, point.longitude);
 
@@ -36,22 +37,15 @@ class PlacesMap extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final count = places.length;
 
     return Semantics(
       button: true,
-      label:
-          count == 1
-              ? 'Mapa con 1 lugar. Toca para ampliarlo.'
-              : 'Mapa con $count lugares. Toca para ampliarlo.',
+      label: PlacesStrings.mapPreviewLabel(places.length),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.medium),
         child: DecoratedBox(
           position: DecorationPosition.foreground,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: scheme.outlineVariant),
-          ),
+          decoration: AppShapes.outlinedBox(scheme, radius: AppRadii.medium),
           child: SizedBox(
             height: height,
             child: Stack(
@@ -75,7 +69,7 @@ class PlacesMap extends StatelessWidget {
                   child: IgnorePointer(
                     child: _MapChip(
                       icon: Icons.open_in_full_rounded,
-                      label: 'Ampliar',
+                      label: PlacesStrings.expandMap,
                     ),
                   ),
                 ),
@@ -117,7 +111,7 @@ class _PlacesMapPageState extends State<PlacesMapPage> {
     final place = widget.places[_selected];
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Lugares en el mapa')),
+      appBar: AppBar(title: const Text(PlacesStrings.mapTitle)),
       body: Stack(
         children: [
           _PlacesFlutterMap(
@@ -194,8 +188,10 @@ class _PlacesFlutterMap extends StatelessWidget {
       ),
       children: [
         TileLayer(
-          urlTemplate: _tileUrl,
-          userAgentPackageName: _userAgentPackageName,
+          // Sin clave. La política de uso de OpenStreetMap pide identificar
+          // la app y mostrar la atribución.
+          urlTemplate: AppConfig.mapTileUrl,
+          userAgentPackageName: AppConfig.appPackageName,
           tileProvider: PlacesMap.debugTileProvider,
         ),
         MarkerLayer(
@@ -246,20 +242,20 @@ class _PlaceMarker extends StatelessWidget {
 
     return Semantics(
       button: onTap != null,
-      label: 'Punto $number: $name',
+      label: PlacesStrings.markerLabel(number, name),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedScale(
           scale: isSelected ? 1.15 : 1,
-          duration: const Duration(milliseconds: 200),
-          curve: const Cubic(0.23, 1, 0.32, 1),
+          duration: Motion.standard,
+          curve: Motion.easeOut,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: isSelected ? scheme.onSurface : scheme.primary,
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 2),
+              border: Border.all(color: AppColors.mapMarkerBorder, width: 2),
               boxShadow: const [
-                BoxShadow(color: Color(0x40000000), blurRadius: 6),
+                BoxShadow(color: AppColors.mapMarkerShadow, blurRadius: 6),
               ],
             ),
             child: Center(
@@ -286,18 +282,18 @@ class _UserMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Tu ubicación',
+      label: PlacesStrings.userLocation,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF2F80ED).withValues(alpha: 0.25),
+          color: AppColors.mapUserLocation.withValues(alpha: 0.25),
           shape: BoxShape.circle,
         ),
         padding: const EdgeInsets.all(5),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF2F80ED),
+            color: AppColors.mapUserLocation,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
+            border: Border.all(color: AppColors.mapMarkerBorder, width: 2),
           ),
         ),
       ),
@@ -319,10 +315,7 @@ class _SelectedPlace extends StatelessWidget {
     return Material(
       color: scheme.surfaceContainerLowest,
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
+      shape: AppShapes.outlinedCard(scheme),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         child: Column(
@@ -372,7 +365,7 @@ class _SelectedPlace extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => openDirections(place),
               icon: const Icon(Icons.directions_outlined),
-              label: const Text('Cómo llegar'),
+              label: const Text(AppStrings.directions),
             ),
           ],
         ),
@@ -395,7 +388,7 @@ class _MapChip extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -422,16 +415,16 @@ class _Attribution extends StatelessWidget {
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
+        color: AppColors.mapAttributionBackground,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
         child: Text(
-          '© OpenStreetMap',
+          PlacesStrings.attribution,
           style: theme.textTheme.labelSmall?.copyWith(
             fontSize: 9,
-            color: const Color(0xFF333333),
+            color: AppColors.mapAttributionText,
           ),
         ),
       ),

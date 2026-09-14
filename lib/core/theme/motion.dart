@@ -17,6 +17,9 @@ abstract final class Motion {
   static const standard = Duration(milliseconds: 200);
   static const enter = Duration(milliseconds: 250);
 
+  /// Pasar de una página a otra dentro de la pantalla (onboarding).
+  static const page = Duration(milliseconds: 300);
+
   /// Separación entre elementos que entran juntos.
   static const stagger = Duration(milliseconds: 50);
 

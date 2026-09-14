@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/config/app_config.dart';
+import '../../../../core/strings/app_strings.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/nova_logo.dart';
 
@@ -44,10 +44,10 @@ class _SplashPageState extends State<SplashPage> {
           children: [
             const NovaLogo(size: 96),
             const SizedBox(height: 24),
-            Text(AppConfig.appName, style: theme.textTheme.displaySmall),
+            Text(AppStrings.appName, style: theme.textTheme.displaySmall),
             const SizedBox(height: 8),
             Text(
-              'Tu asistente inteligente',
+              AppStrings.tagline,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

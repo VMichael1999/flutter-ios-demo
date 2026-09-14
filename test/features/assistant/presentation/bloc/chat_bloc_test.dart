@@ -1,7 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:nova_ai/core/config/app_config.dart';
+import 'package:nova_ai/core/strings/ai_prompts.dart';
 import 'package:nova_ai/core/errors/failures.dart';
 import 'package:nova_ai/features/assistant/domain/entities/ai_reply_chunk.dart';
 import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
@@ -107,7 +107,7 @@ void main() {
     'envía la foto con una pregunta por defecto si no hay texto',
     setUp:
         () => stubReply(
-          AppConfig.defaultImagePrompt,
+          AiPrompts.defaultImagePrompt,
           () => Stream.value(
             const AiTextChunk('Es el letrero de un restaurante.'),
           ),
@@ -136,7 +136,7 @@ void main() {
     verify:
         (_) => verify(
           () => repository.streamReply(
-            AppConfig.defaultImagePrompt,
+            AiPrompts.defaultImagePrompt,
             attachment: testImageAttachment,
           ),
         ).called(1),

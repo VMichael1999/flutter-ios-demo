@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../../../core/strings/error_strings.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_message.dart';
@@ -38,10 +39,9 @@ class AiRepositoryImpl implements AiRepository {
     final details = error.toString();
     const accessErrors = ['App Check', 'UNAUTHENTICATED', 'PERMISSION_DENIED'];
     if (accessErrors.any(details.contains)) {
-      return 'NOVA no tiene acceso a la IA en este momento. '
-          'Revisa la configuración de Firebase.';
+      return ErrorStrings.aiNoAccess;
     }
-    return 'NOVA no pudo responder. Revisa tu conexión e inténtalo de nuevo.';
+    return ErrorStrings.aiUnavailable;
   }
 
   @override

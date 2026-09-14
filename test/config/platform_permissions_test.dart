@@ -26,7 +26,9 @@ void main() {
     test('no declara CAMERA, que bloquearía la cámara de image_picker', () {
       expect(
         manifest,
-        isNot(contains('<uses-permission android:name="android.permission.CAMERA"')),
+        isNot(
+          contains('<uses-permission android:name="android.permission.CAMERA"'),
+        ),
       );
       expect(manifest, contains('android.hardware.camera'));
     });

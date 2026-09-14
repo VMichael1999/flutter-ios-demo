@@ -1,11 +1,17 @@
 import 'package:flutter/foundation.dart';
 
+import '../strings/app_strings.dart';
+
 /// Configuración global de NOVA.
 ///
-/// Los valores se pueden sobrescribir al compilar con `--dart-define`,
-/// por ejemplo: `flutter run --dart-define=NOVA_ENV=qa`.
+/// Los valores vienen de `.env` al compilar con
+/// `flutter run --dart-define-from-file=.env` (ver `.env.example`). Cada uno
+/// tiene un valor por defecto para que los tests y la CI funcionen sin `.env`.
 abstract final class AppConfig {
-  static const appName = 'NOVA AI';
+  static const appName = AppStrings.appName;
+
+  /// Identificador de la app en Android e iOS.
+  static const appPackageName = 'com.vmichael1999.novaai';
 
   /// Entorno de ejecución: `dev`, `qa` o `prod`.
   static const environment = String.fromEnvironment(
@@ -31,42 +37,49 @@ abstract final class AppConfig {
     'NOVA_RECAPTCHA_SITE_KEY',
   );
 
+  // Servicios externos. No son secretos: están en `.env` para poder cambiarlos
+  // (por ejemplo, otro proveedor de mapas) sin tocar el código.
+
+  /// Servidores de Overpass (OpenStreetMap), separados por comas y en orden
+  /// de preferencia.
+  static const _overpassEndpoints = String.fromEnvironment(
+    'NOVA_OVERPASS_ENDPOINTS',
+    defaultValue:
+        'https://overpass-api.de/api/interpreter,'
+        'https://overpass.kumi.systems/api/interpreter,'
+        'https://maps.mail.ru/osm/tools/overpass/api/interpreter,'
+        'https://overpass.private.coffee/api/interpreter',
+  );
+
+  static final overpassEndpoints = [
+    for (final url in _overpassEndpoints.split(','))
+      if (url.trim().isNotEmpty) Uri.parse(url.trim()),
+  ];
+
+  /// Plantilla de los mapas base; el mapa completa `{z}/{x}/{y}`.
+  static const mapTileUrl = String.fromEnvironment(
+    'NOVA_MAP_TILE_URL',
+    defaultValue: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+  );
+
+  /// Ruta en Google Maps; la app le añade el destino.
+  static const directionsUrl = String.fromEnvironment(
+    'NOVA_DIRECTIONS_URL',
+    defaultValue: 'https://www.google.com/maps/dir/',
+  );
+
+  /// Página del proyecto: el contacto que piden las políticas de uso de
+  /// OpenStreetMap y Overpass.
+  static const projectUrl = String.fromEnvironment(
+    'NOVA_PROJECT_URL',
+    defaultValue: 'https://github.com/VMichael1999/flutter-ios-demo',
+  );
+
   /// Radio máximo para "lugares cerca de mí".
   static const nearbyRadiusMeters = 5000;
 
   /// Cantidad de lugares más cercanos que se devuelven.
   static const nearbyResultLimit = 5;
-
-  /// Servidores de Overpass (OpenStreetMap), en orden de preferencia.
-  static final overpassEndpoints = [
-    Uri.parse('https://overpass-api.de/api/interpreter'),
-    Uri.parse('https://overpass.kumi.systems/api/interpreter'),
-    Uri.parse('https://maps.mail.ru/osm/tools/overpass/api/interpreter'),
-    Uri.parse('https://overpass.private.coffee/api/interpreter'),
-  ];
-
-  /// Pregunta que se envía cuando el usuario manda una foto sin texto.
-  static const defaultImagePrompt = '¿Qué hay en esta imagen?';
-
-  static const systemPrompt =
-      'Eres NOVA, un asistente móvil inteligente creado con Flutter. '
-      'Responde en el idioma del usuario, de forma clara, breve y amable.\n\n'
-      'Lugares: cuando el usuario pida lugares cercanos (restaurantes, '
-      'cafeterías, farmacias, bancos, etc.) usa la función '
-      'buscarLugaresCercanos, que usa su ubicación actual y un radio máximo de '
-      '5 km. Nunca inventes lugares; menciona solo los que devuelve la función, '
-      'del más cercano al más lejano y con su distancia. Si la función devuelve '
-      'un error, explícalo y di cómo resolverlo.\n\n'
-      'Imágenes: si el usuario envía una foto, descríbela y responde su '
-      'pregunta. Si muestra un restaurante, cafetería, tienda u otro local con '
-      'un nombre visible, lee el nombre y usa buscarLugaresCercanos con ese '
-      'nombre y la categoría adecuada para ubicarlo cerca del usuario; si no '
-      'aparece, dilo con claridad. Si es una factura o recibo, extrae el monto '
-      'total con su moneda, la fecha de emisión, la fecha de vencimiento y el '
-      'concepto; si algún dato no se lee, indícalo en lugar de suponerlo.\n\n'
-      'Si te piden algo que todavía no puedes ejecutar (recordatorios, '
-      'documentos PDF o voz), explica que esa capacidad llegará en próximas '
-      'versiones de NOVA.';
 }
 
 /// Origen de las respuestas de la IA.

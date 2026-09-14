@@ -11,8 +11,10 @@ void main() {
 
   test('lee el texto de los enlaces y omite las direcciones', () {
     expect(
-      speakableText('Mira [cómo llegar](https://maps.google.com/x) o '
-          'https://example.com ahora'),
+      speakableText(
+        'Mira [cómo llegar](https://maps.google.com/x) o '
+        'https://example.com ahora',
+      ),
       'Mira cómo llegar o ahora',
     );
   });

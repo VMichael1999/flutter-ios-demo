@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nova_ai/core/theme/app_theme.dart';
+import 'package:nova_ai/core/utils/dates.dart';
 import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
 import 'package:nova_ai/features/history/domain/entities/conversation.dart';
 import 'package:nova_ai/features/home/presentation/pages/home_page.dart';
@@ -26,12 +27,13 @@ void main() {
       MaterialApp(
         theme: theme ?? AppTheme.light(),
         home: Builder(
-          builder: (context) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              textScaler: TextScaler.linear(textScale),
-            ),
-            child: HomePage(clock: () => evening),
-          ),
+          builder:
+              (context) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(textScale)),
+                child: HomePage(clock: () => evening),
+              ),
         ),
       ),
     );
@@ -48,8 +50,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('los atajos no se desbordan con la letra al 130 %',
-      (tester) async {
+  testWidgets('los atajos no se desbordan con la letra al 130 %', (
+    tester,
+  ) async {
     await pumpHomeOnPhone(
       tester,
       logicalSize: const Size(360, 800),
@@ -77,8 +80,9 @@ void main() {
     expect(find.text('¿Qué hacemos hoy?', findRichText: true), findsOneWidget);
   });
 
-  testWidgets('muestra las conversaciones recientes sin desbordarse',
-      (tester) async {
+  testWidgets('muestra las conversaciones recientes sin desbordarse', (
+    tester,
+  ) async {
     final repository = InMemoryConversationRepository([
       for (var i = 1; i <= 4; i++)
         Conversation(

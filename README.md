@@ -111,6 +111,10 @@ La configuración vive en `.env`, que **nunca se sube a GitHub** (está en
 | `NOVA_GEMINI_MODEL` | Modelo de Gemini (por defecto `gemini-3.1-flash-lite`) |
 | `NOVA_APP_CHECK_DEBUG` | `true` para usar tokens de depuración de App Check |
 | `NOVA_RECAPTCHA_SITE_KEY` | Clave de sitio de reCAPTCHA Enterprise (web en producción) |
+| `NOVA_OVERPASS_ENDPOINTS` | Servidores de Overpass (lugares), separados por comas |
+| `NOVA_MAP_TILE_URL` | Plantilla de los mapas base (OpenStreetMap por defecto) |
+| `NOVA_DIRECTIONS_URL` | Ruta de Google Maps para "Cómo llegar" |
+| `NOVA_PROJECT_URL` | Página del proyecto, usada como contacto ante OpenStreetMap |
 
 > Todo lo que se compila dentro de la app puede extraerse del APK. Las claves
 > privadas de servicios de pago (OpenAI, Anthropic, Google Places) no van en

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
 import 'nova_mark.dart';
 
 /// Logo de NOVA: la cara de la mascota sobre un cuadro de tinta, igual que el
@@ -19,7 +20,7 @@ class NovaLogo extends StatelessWidget {
       height: size,
       padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        color: NovaBrand.ink,
+        color: AppColors.ink,
         borderRadius: BorderRadius.circular(size * 0.28),
         // En modo oscuro el cuadro de tinta se perdería contra el fondo.
         border:

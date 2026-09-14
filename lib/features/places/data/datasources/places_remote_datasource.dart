@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/strings/error_strings.dart';
 import '../../../../core/utils/geo.dart';
 import '../../domain/entities/place_category.dart';
 import '../models/place_model.dart';
@@ -43,8 +44,7 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
   static const maxElementsByName = 1000;
 
   /// La política de uso de Overpass pide identificar la app y un contacto.
-  static const userAgent =
-      'NOVA-AI/0.1 (+https://github.com/VMichael1999/flutter-ios-demo)';
+  static const userAgent = 'NOVA-AI/0.1 (+${AppConfig.projectUrl})';
 
   final http.Client _client;
   final List<Uri> _endpoints;
@@ -92,8 +92,7 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
           if (pending == 0 && !result.isCompleted) {
             result.completeError(
               PlacesFailure(
-                'No se pudo consultar el servicio de lugares. '
-                'Inténtalo de nuevo en unos minutos.',
+                ErrorStrings.placesUnavailable,
                 cause: errors.isEmpty ? null : errors.last,
               ),
             );

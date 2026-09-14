@@ -25,7 +25,8 @@ void main() {
     registerFallbackValue(PlaceCategory.restaurant);
   });
 
-  Future<List<Place>> Function() anySearch() => () => repository.searchNearby(
+  Future<List<Place>> Function() anySearch() =>
+      () => repository.searchNearby(
         center: any(named: 'center'),
         category: any(named: 'category'),
         radiusMeters: any(named: 'radiusMeters'),
@@ -40,8 +41,9 @@ void main() {
       locationService: locationService,
       repository: repository,
     );
-    when(() => locationService.getCurrentLocation())
-        .thenAnswer((_) async => testCenter);
+    when(
+      () => locationService.getCurrentLocation(),
+    ).thenAnswer((_) async => testCenter);
     when(anySearch()).thenAnswer((_) async => [chifaPlace, bodegaPlace]);
   });
 

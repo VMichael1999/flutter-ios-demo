@@ -8,6 +8,8 @@ import '../../../../core/config/app_config.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/services/speech_service.dart';
+import '../../../../core/strings/strings.dart';
+import '../../../../core/theme/app_shapes.dart';
 import '../../../../core/theme/motion.dart';
 import '../../data/services/media_picker_service.dart';
 import '../../domain/entities/chat_attachment.dart';
@@ -139,18 +141,18 @@ class _ChatPageState extends State<ChatPage> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
                   child: Text(
-                    'Añadir una imagen',
+                    ChatStrings.addImageTitle,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_camera_outlined),
-                  title: const Text('Tomar foto'),
+                  title: const Text(ChatStrings.takePhoto),
                   onTap: () => Navigator.pop(context, MediaSource.camera),
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_outlined),
-                  title: const Text('Elegir de la galería'),
+                  title: const Text(ChatStrings.chooseFromGallery),
                   onTap: () => Navigator.pop(context, MediaSource.gallery),
                 ),
               ],
@@ -171,8 +173,8 @@ class _ChatPageState extends State<ChatPage> {
       if (!mounted) return;
       _showMessage(
         source == MediaSource.camera
-            ? 'No se pudo abrir la cámara.'
-            : 'No se pudo abrir la galería.',
+            ? ChatStrings.cameraError
+            : ChatStrings.galleryError,
       );
     }
   }
@@ -195,7 +197,9 @@ class _ChatPageState extends State<ChatPage> {
           _endDictation();
           if (mounted) {
             _showMessage(
-              error is SpeechFailure ? error.message : 'No pude escucharte.',
+              error is SpeechFailure
+                  ? error.message
+                  : ErrorStrings.speechGeneric,
             );
           }
         },
@@ -268,15 +272,15 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('NOVA'),
+        title: const Text(AppStrings.brand),
         actions: [
           IconButton(
-            tooltip: 'Historial',
+            tooltip: AppStrings.history,
             icon: const Icon(Icons.history_rounded),
             onPressed: () => context.push(AppRoutes.history),
           ),
           IconButton(
-            tooltip: 'Nueva conversación',
+            tooltip: ChatStrings.newConversation,
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () => context.read<ChatBloc>().add(const ChatCleared()),
           ),
@@ -373,12 +377,6 @@ class _ChatPageState extends State<ChatPage> {
 class _EmptyChat extends StatelessWidget {
   const _EmptyChat({required this.onSuggestionTap});
 
-  static const _suggestions = [
-    '¿Qué puedes hacer?',
-    '¿Qué hay cerca de mí?',
-    'Ayúdame a organizar mi semana',
-  ];
-
   final ValueChanged<String> onSuggestionTap;
 
   @override
@@ -392,13 +390,13 @@ class _EmptyChat extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Pregúntame lo que quieras',
+              ChatStrings.emptyTitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Escribe, dicta con el micrófono o mándame una foto.',
+              ChatStrings.emptySubtitle,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -410,7 +408,7 @@ class _EmptyChat extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final suggestion in _suggestions)
+                for (final suggestion in ChatStrings.suggestions)
                   ActionChip(
                     label: Text(suggestion),
                     onPressed: () => onSuggestionTap(suggestion),
@@ -436,8 +434,7 @@ class _DemoModeBanner extends StatelessWidget {
       color: scheme.tertiaryContainer,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Text(
-        'Modo demo: Firebase aún no está configurado y las respuestas son '
-        'simuladas.',
+        ChatStrings.demoBanner,
         style: TextStyle(color: scheme.onTertiaryContainer),
       ),
     );
@@ -459,7 +456,7 @@ class _ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: scheme.errorContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadii.small),
       ),
       child: Row(
         children: [

@@ -81,22 +81,24 @@ void main() {
     expect(places.map((p) => p.id), ['cerca', 'lejos']);
   });
 
-  test('busca un local por nombre con una sola consulta en el radio completo',
-      () async {
-    final dataSource = _FakePlacesDataSource({});
-    final repository = PlacesRepositoryImpl(dataSource);
+  test(
+    'busca un local por nombre con una sola consulta en el radio completo',
+    () async {
+      final dataSource = _FakePlacesDataSource({});
+      final repository = PlacesRepositoryImpl(dataSource);
 
-    await repository.searchNearby(
-      center: testCenter,
-      category: PlaceCategory.supermarket,
-      radiusMeters: 5000,
-      limit: 5,
-      name: 'Tottus',
-    );
+      await repository.searchNearby(
+        center: testCenter,
+        category: PlaceCategory.supermarket,
+        radiusMeters: 5000,
+        limit: 5,
+        name: 'Tottus',
+      );
 
-    expect(dataSource.requestedRadii, [5000]);
-    expect(dataSource.requestedNames, ['Tottus']);
-  });
+      expect(dataSource.requestedRadii, [5000]);
+      expect(dataSource.requestedNames, ['Tottus']);
+    },
+  );
 
   test('muestra una sola vez el mismo local registrado dos veces', () async {
     final dataSource = _FakePlacesDataSource({

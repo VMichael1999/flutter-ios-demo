@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/strings/voice_strings.dart';
+import '../../../../core/theme/app_shapes.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../shared/widgets/entrance.dart';
 import '../../../../shared/widgets/pressable.dart';
@@ -31,12 +33,11 @@ class _VoicePageState extends State<VoicePage> {
   }
 
   static String _statusLabel(VoiceState state) => switch (state.status) {
-    VoiceStatus.idle => 'Toca el micrófono y habla',
-    VoiceStatus.listening => 'Te escucho… habla ahora',
-    VoiceStatus.thinking => 'Pensando…',
-    VoiceStatus.speaking => 'Hablando · toca para interrumpir',
-    VoiceStatus.failure =>
-      state.errorMessage ?? 'Algo salió mal. Inténtalo otra vez.',
+    VoiceStatus.idle => VoiceStrings.idle,
+    VoiceStatus.listening => VoiceStrings.listening,
+    VoiceStatus.thinking => VoiceStrings.thinking,
+    VoiceStatus.speaking => VoiceStrings.speaking,
+    VoiceStatus.failure => state.errorMessage ?? VoiceStrings.genericFailure,
   };
 
   @override
@@ -45,7 +46,7 @@ class _VoicePageState extends State<VoicePage> {
     final scheme = theme.colorScheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Habla con NOVA')),
+      appBar: AppBar(title: const Text(VoiceStrings.title)),
       body: SafeArea(
         child: BlocBuilder<VoiceConversationCubit, VoiceState>(
           builder: (context, state) {
@@ -104,12 +105,9 @@ class _VoicePageState extends State<VoicePage> {
                                 child: Container(
                                   width: double.infinity,
                                   padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
+                                  decoration: AppShapes.outlinedBox(
+                                    scheme,
                                     color: scheme.surfaceContainerLowest,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: scheme.outlineVariant,
-                                    ),
                                   ),
                                   child: Text(
                                     reply,
@@ -150,19 +148,19 @@ class _MicButton extends StatelessWidget {
     final (icon, tooltip, background, foreground) = switch (status) {
       VoiceStatus.listening => (
         Icons.stop_rounded,
-        'Terminar de hablar',
+        VoiceStrings.finishSpeaking,
         scheme.onSurface,
         scheme.surface,
       ),
       VoiceStatus.thinking || VoiceStatus.speaking => (
         Icons.close_rounded,
-        'Interrumpir',
+        VoiceStrings.interrupt,
         scheme.surfaceContainerHighest,
         scheme.onSurface,
       ),
       VoiceStatus.idle || VoiceStatus.failure => (
         Icons.mic_rounded,
-        'Hablar',
+        VoiceStrings.speak,
         scheme.primary,
         scheme.onPrimary,
       ),

@@ -1,3 +1,4 @@
+import '../../../../core/strings/ai_prompts.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_message.dart';
@@ -14,15 +15,10 @@ class FakeAiDataSource implements AiRemoteDataSource {
     String message, {
     ChatAttachment? attachment,
   }) async* {
-    final received =
-        attachment == null
-            ? 'Recibí tu mensaje: "$message".'
-            : 'Recibí tu imagen y tu mensaje: "$message".';
-    final reply =
-        'Estoy en modo demo porque Firebase todavía no está '
-        'configurado. $received Cuando conectemos Firebase AI Logic, te '
-        'responderé con Gemini en tiempo real.';
-
+    final reply = AiPrompts.demoReply(
+      message: message,
+      withImage: attachment != null,
+    );
     for (final word in reply.split(' ')) {
       await Future<void>.delayed(chunkDelay);
       yield AiTextChunk('$word ');

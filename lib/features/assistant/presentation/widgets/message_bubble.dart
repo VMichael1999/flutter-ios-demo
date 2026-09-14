@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/strings/chat_strings.dart';
+import '../../../../core/theme/app_shapes.dart';
 import '../../../../core/theme/motion.dart';
 import '../../../../shared/widgets/entrance.dart';
 import '../../domain/entities/chat_message.dart';
@@ -90,7 +92,7 @@ class MessageBubble extends StatelessWidget {
                       width: 220,
                       fit: BoxFit.cover,
                       gaplessPlayback: true,
-                      semanticLabel: 'Imagen enviada',
+                      semanticLabel: ChatStrings.imageSent,
                     ),
                   ),
                 ),
@@ -157,17 +159,14 @@ class _SavedImageNote extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: scheme.outlineVariant),
-      ),
+      decoration: AppShapes.outlinedBox(scheme, radius: AppRadii.small),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.image_outlined, size: 18, color: scheme.onSurfaceVariant),
           const SizedBox(width: 6),
           Text(
-            'Imagen enviada',
+            ChatStrings.imageSent,
             style: theme.textTheme.bodySmall?.copyWith(
               color: scheme.onSurfaceVariant,
             ),
