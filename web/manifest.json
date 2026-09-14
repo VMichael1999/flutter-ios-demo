@@ -1,11 +1,11 @@
 {
-    "name": "proyect",
-    "short_name": "proyect",
+    "name": "NOVA AI",
+    "short_name": "NOVA AI",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Asistente movil inteligente multimodal.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
