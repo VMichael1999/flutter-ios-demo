@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/motion.dart';
+import '../../../../shared/widgets/entrance.dart';
 import '../../domain/entities/chat_attachment.dart';
 
 class ChatInput extends StatelessWidget {
@@ -45,14 +47,25 @@ class ChatInput extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (attachment != null)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 0, 8),
-              child: _AttachmentPreview(
-                attachment: attachment,
-                onRemove: onRemoveAttachment,
-              ),
-            ),
+          // La vista previa abre y cierra su espacio en vez de empujar la barra
+          // de golpe.
+          AnimatedSize(
+            duration: Motion.standard,
+            curve: Motion.easeOut,
+            alignment: Alignment.bottomLeft,
+            child:
+                attachment == null
+                    ? const SizedBox(width: double.infinity)
+                    : Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 0, 8),
+                      child: Entrance(
+                        child: _AttachmentPreview(
+                          attachment: attachment,
+                          onRemove: onRemoveAttachment,
+                        ),
+                      ),
+                    ),
+          ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -71,40 +84,64 @@ class ChatInput extends StatelessWidget {
                   textCapitalization: TextCapitalization.sentences,
                   onSubmitted: (_) => onSend(),
                   decoration: InputDecoration(
-                    hintText: isListening
-                        ? 'Te escucho…'
-                        : attachment == null
+                    hintText:
+                        isListening
+                            ? 'Te escucho…'
+                            : attachment == null
                             ? 'Escribe o dicta a NOVA…'
                             : 'Pregunta sobre la imagen…',
-                    suffixIcon: onMicTap == null
-                        ? null
-                        : isListening
-                            ? IconButton.filledTonal(
-                                tooltip: 'Dejar de dictar',
-                                onPressed: onMicTap,
-                                icon: const Icon(Icons.graphic_eq_rounded),
-                              )
-                            : IconButton(
-                                tooltip: 'Dictar',
-                                onPressed: isStreaming ? null : onMicTap,
-                                icon: const Icon(Icons.mic_none_rounded),
-                              ),
+                    suffixIcon:
+                        onMicTap == null
+                            ? null
+                            : AnimatedSwitcher(
+                              duration: Motion.fast,
+                              switchInCurve: Motion.easeOut,
+                              switchOutCurve: Motion.easeOut,
+                              transitionBuilder: Motion.fadeScale,
+                              child:
+                                  isListening
+                                      ? IconButton.filledTonal(
+                                        key: const ValueKey('listening'),
+                                        tooltip: 'Dejar de dictar',
+                                        onPressed: onMicTap,
+                                        icon: const Icon(
+                                          Icons.graphic_eq_rounded,
+                                        ),
+                                      )
+                                      : IconButton(
+                                        key: const ValueKey('mic'),
+                                        tooltip: 'Dictar',
+                                        onPressed:
+                                            isStreaming ? null : onMicTap,
+                                        icon: const Icon(
+                                          Icons.mic_none_rounded,
+                                        ),
+                                      ),
+                            ),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
-              if (isStreaming)
-                IconButton.filledTonal(
-                  tooltip: 'Detener',
-                  onPressed: onStop,
-                  icon: const Icon(Icons.stop_rounded),
-                )
-              else
-                IconButton.filled(
-                  tooltip: 'Enviar',
-                  onPressed: onSend,
-                  icon: const Icon(Icons.arrow_upward_rounded),
-                ),
+              AnimatedSwitcher(
+                duration: Motion.fast,
+                switchInCurve: Motion.easeOut,
+                switchOutCurve: Motion.easeOut,
+                transitionBuilder: Motion.fadeScale,
+                child:
+                    isStreaming
+                        ? IconButton.filledTonal(
+                          key: const ValueKey('stop'),
+                          tooltip: 'Detener',
+                          onPressed: onStop,
+                          icon: const Icon(Icons.stop_rounded),
+                        )
+                        : IconButton.filled(
+                          key: const ValueKey('send'),
+                          tooltip: 'Enviar',
+                          onPressed: onSend,
+                          icon: const Icon(Icons.arrow_upward_rounded),
+                        ),
+              ),
             ],
           ),
         ],

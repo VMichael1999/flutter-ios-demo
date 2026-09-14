@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/services/speech_service.dart';
+import '../../../../core/theme/motion.dart';
 import '../../data/services/media_picker_service.dart';
 import '../../domain/entities/chat_attachment.dart';
 import '../bloc/chat_bloc.dart';
@@ -74,6 +75,9 @@ class _ChatPageState extends State<ChatPage> {
   ChatAttachment? _attachment;
   StreamSubscription<SpeechUpdate>? _dictation;
 
+  /// Mensajes (y listas de lugares) que ya hicieron su animación de entrada.
+  final _animatedIds = <String>{};
+
   @override
   void initState() {
     super.initState();
@@ -110,30 +114,31 @@ class _ChatPageState extends State<ChatPage> {
     final source = await showModalBottomSheet<MediaSource>(
       context: context,
       showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-              child: Text(
-                'Añadir una imagen',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+      builder:
+          (context) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                  child: Text(
+                    'Añadir una imagen',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Tomar foto'),
+                  onTap: () => Navigator.pop(context, MediaSource.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Elegir de la galería'),
+                  onTap: () => Navigator.pop(context, MediaSource.gallery),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Tomar foto'),
-              onTap: () => Navigator.pop(context, MediaSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Elegir de la galería'),
-              onTap: () => Navigator.pop(context, MediaSource.gallery),
-            ),
-          ],
-        ),
-      ),
+          ),
     );
     if (source != null) await _pickImage(source);
   }
@@ -236,8 +241,8 @@ class _ChatPageState extends State<ChatPage> {
       if (!_scrollController.hasClients) return;
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOut,
+        duration: Motion.enter,
+        curve: Motion.easeOut,
       );
     });
   }
@@ -261,8 +266,9 @@ class _ChatPageState extends State<ChatPage> {
             if (widget.aiMode == AiMode.demo) const _DemoModeBanner(),
             Expanded(
               child: BlocConsumer<ChatBloc, ChatState>(
-                listenWhen: (previous, current) =>
-                    previous.messages != current.messages,
+                listenWhen:
+                    (previous, current) =>
+                        previous.messages != current.messages,
                 listener: (context, state) => _scrollToBottom(),
                 builder: (context, state) {
                   if (state.messages.isEmpty) {
@@ -272,35 +278,68 @@ class _ChatPageState extends State<ChatPage> {
                     controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     itemCount: state.messages.length,
-                    itemBuilder: (context, index) =>
-                        MessageBubble(message: state.messages[index]),
+                    itemBuilder: (context, index) {
+                      final message = state.messages[index];
+                      // Solo entra animado la primera vez que se muestra: al
+                      // volver a verlo con el scroll ya no se repite.
+                      return MessageBubble(
+                        key: ValueKey(message.id),
+                        message: message,
+                        animateIn: _animatedIds.add(message.id),
+                        animatePlaces:
+                            message.places.isNotEmpty &&
+                            _animatedIds.add('${message.id}:places'),
+                      );
+                    },
                   );
                 },
               ),
             ),
             BlocSelector<ChatBloc, ChatState, String?>(
               selector: (state) => state.errorMessage,
-              builder: (context, error) => error == null
-                  ? const SizedBox.shrink()
-                  : _ErrorBanner(message: error),
+              builder:
+                  (context, error) => AnimatedSwitcher(
+                    duration: Motion.standard,
+                    switchInCurve: Motion.easeOut,
+                    switchOutCurve: Motion.easeOut,
+                    transitionBuilder:
+                        (child, animation) => SizeTransition(
+                          sizeFactor: animation,
+                          alignment: Alignment.bottomCenter,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        ),
+                    child:
+                        error == null
+                            ? const SizedBox(width: double.infinity)
+                            : _ErrorBanner(
+                              key: ValueKey(error),
+                              message: error,
+                            ),
+                  ),
             ),
             BlocSelector<ChatBloc, ChatState, bool>(
               selector: (state) => state.isStreaming,
-              builder: (context, isStreaming) => ChatInput(
-                controller: _textController,
-                focusNode: _inputFocus,
-                isStreaming: isStreaming,
-                attachment: _attachment,
-                isListening: _dictation != null,
-                onMicTap:
-                    widget.speechService == null ? null : _toggleDictation,
-                onSend: _send,
-                onStop: () => context
-                    .read<ChatBloc>()
-                    .add(const ChatGenerationStopped()),
-                onAttach: _chooseImageSource,
-                onRemoveAttachment: () => setState(() => _attachment = null),
-              ),
+              builder:
+                  (context, isStreaming) => ChatInput(
+                    controller: _textController,
+                    focusNode: _inputFocus,
+                    isStreaming: isStreaming,
+                    attachment: _attachment,
+                    isListening: _dictation != null,
+                    onMicTap:
+                        widget.speechService == null ? null : _toggleDictation,
+                    onSend: _send,
+                    onStop:
+                        () => context.read<ChatBloc>().add(
+                          const ChatGenerationStopped(),
+                        ),
+                    onAttach: _chooseImageSource,
+                    onRemoveAttachment:
+                        () => setState(() => _attachment = null),
+                  ),
             ),
           ],
         ),
@@ -384,7 +423,7 @@ class _DemoModeBanner extends StatelessWidget {
 }
 
 class _ErrorBanner extends StatelessWidget {
-  const _ErrorBanner({required this.message});
+  const _ErrorBanner({super.key, required this.message});
 
   final String message;
 

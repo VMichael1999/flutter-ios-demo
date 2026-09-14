@@ -18,6 +18,10 @@ class ChatAttachment extends Equatable {
 
   // Comparar byte a byte una foto de varios MB en cada estado sería costoso.
   @override
-  List<Object?> get props =>
-      [name, mimeType, bytes.lengthInBytes, identityHashCode(bytes)];
+  List<Object?> get props => [
+    name,
+    mimeType,
+    bytes.lengthInBytes,
+    identityHashCode(bytes),
+  ];
 }

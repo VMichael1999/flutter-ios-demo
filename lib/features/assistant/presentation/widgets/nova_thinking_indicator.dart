@@ -61,16 +61,17 @@ class _NovaThinkingIndicatorState extends State<NovaThinkingIndicator>
             height: widget.size * 1.25,
             child: AnimatedBuilder(
               animation: _controller,
-              builder: (context, _) => CustomPaint(
-                painter: _NovaMascotPainter(
-                  progress: _controller.value,
-                  primary: scheme.primary,
-                  secondary: scheme.tertiary,
-                  face: scheme.onPrimary,
-                  bubble: scheme.surfaceContainerHighest,
-                  dots: scheme.onSurfaceVariant,
-                ),
-              ),
+              builder:
+                  (context, _) => CustomPaint(
+                    painter: _NovaMascotPainter(
+                      progress: _controller.value,
+                      primary: scheme.primary,
+                      secondary: scheme.tertiary,
+                      face: scheme.onPrimary,
+                      bubble: scheme.surfaceContainerHighest,
+                      dots: scheme.onSurfaceVariant,
+                    ),
+                  ),
             ),
           ),
           const SizedBox(width: 8),
@@ -143,7 +144,12 @@ class _NovaMascotPainter extends CustomPainter {
     );
   }
 
-  void _paintAntenna(Canvas canvas, Offset head, double headRadius, double unit) {
+  void _paintAntenna(
+    Canvas canvas,
+    Offset head,
+    double headRadius,
+    double unit,
+  ) {
     final base = head.translate(0, -headRadius);
     final tip = base.translate(unit * 0.6, -unit * 1.2);
     canvas.drawLine(
@@ -195,7 +201,11 @@ class _NovaMascotPainter extends CustomPainter {
           headRadius * (0.06 + bob * 0.03),
           -headRadius * 0.12,
         );
-        canvas.drawCircle(eye + look, headRadius * 0.11, Paint()..color = pupil);
+        canvas.drawCircle(
+          eye + look,
+          headRadius * 0.11,
+          Paint()..color = pupil,
+        );
       }
     }
 
@@ -218,14 +228,8 @@ class _NovaMascotPainter extends CustomPainter {
     double unit,
   ) {
     final bubbles = [
-      (
-        head.translate(headRadius * 1.05, -headRadius * 1.05),
-        unit * 0.45,
-      ),
-      (
-        head.translate(headRadius * 1.25, -headRadius * 1.4),
-        unit * 0.6,
-      ),
+      (head.translate(headRadius * 1.05, -headRadius * 1.05), unit * 0.45),
+      (head.translate(headRadius * 1.25, -headRadius * 1.4), unit * 0.6),
       (Offset(size.width - unit * 1.9, unit * 1.9), unit * 1.55),
     ];
 

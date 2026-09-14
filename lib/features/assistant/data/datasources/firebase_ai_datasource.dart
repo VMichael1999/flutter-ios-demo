@@ -12,13 +12,14 @@ import 'ai_remote_datasource.dart';
 /// automáticamente las funciones de [NovaToolbox] cuando Gemini las pide.
 class FirebaseAiDataSource implements AiRemoteDataSource {
   FirebaseAiDataSource({required NovaToolbox toolbox, GenerativeModel? model})
-      : _toolbox = toolbox,
-        _model = model ??
-            FirebaseAI.googleAI().generativeModel(
-              model: AppConfig.geminiModel,
-              systemInstruction: Content.system(AppConfig.systemPrompt),
-              tools: toolbox.tools,
-            );
+    : _toolbox = toolbox,
+      _model =
+          model ??
+          FirebaseAI.googleAI().generativeModel(
+            model: AppConfig.geminiModel,
+            systemInstruction: Content.system(AppConfig.systemPrompt),
+            tools: toolbox.tools,
+          );
 
   final NovaToolbox _toolbox;
   final GenerativeModel _model;
@@ -30,12 +31,13 @@ class FirebaseAiDataSource implements AiRemoteDataSource {
     ChatAttachment? attachment,
   }) async* {
     final chat = _chat ??= _model.startChat();
-    final content = attachment == null
-        ? Content.text(message)
-        : Content.multi([
-            InlineDataPart(attachment.mimeType, attachment.bytes),
-            TextPart(message),
-          ]);
+    final content =
+        attachment == null
+            ? Content.text(message)
+            : Content.multi([
+              InlineDataPart(attachment.mimeType, attachment.bytes),
+              TextPart(message),
+            ]);
 
     await for (final response in chat.sendMessageStream(content)) {
       // Las funciones se ejecutan entre respuestas del modelo.

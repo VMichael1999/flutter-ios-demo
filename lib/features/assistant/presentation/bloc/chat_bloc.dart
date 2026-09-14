@@ -18,9 +18,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc({
     required SendMessage sendMessage,
     required ResetConversation resetConversation,
-  })  : _sendMessage = sendMessage,
-        _resetConversation = resetConversation,
-        super(const ChatState()) {
+  }) : _sendMessage = sendMessage,
+       _resetConversation = resetConversation,
+       super(const ChatState()) {
     on<ChatMessageSent>(_onMessageSent);
     on<ChatGenerationStopped>(_onGenerationStopped);
     on<ChatCleared>(_onCleared);
@@ -58,11 +58,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final prompt = text.isEmpty ? AppConfig.defaultImagePrompt : text;
     _replySubscription = _sendMessage(prompt, attachment: attachment).listen(
       (chunk) => add(_ChatChunkReceived(chunk)),
-      onError: (Object error) => add(
-        _ChatReplyFailed(
-          error is AiFailure ? error.message : 'No pude generar una respuesta.',
-        ),
-      ),
+      onError:
+          (Object error) => add(
+            _ChatReplyFailed(
+              error is AiFailure
+                  ? error.message
+                  : 'No pude generar una respuesta.',
+            ),
+          ),
       onDone: () => add(const _ChatReplyCompleted()),
       cancelOnError: true,
     );
@@ -74,8 +77,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       state.copyWith(
         messages: _updateLastAssistant(
           (message) => switch (event.chunk) {
-            AiTextChunk(:final text) =>
-              message.copyWith(text: message.text + text),
+            AiTextChunk(:final text) => message.copyWith(
+              text: message.text + text,
+            ),
             AiPlacesChunk(:final places) => message.copyWith(places: places),
           },
         ),
@@ -110,7 +114,9 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       ChatState(
         messages: [
           for (final message in messages)
-            message.isStreaming ? message.copyWith(isStreaming: false) : message,
+            message.isStreaming
+                ? message.copyWith(isStreaming: false)
+                : message,
         ],
         status: ChatStatus.failure,
         errorMessage: event.message,

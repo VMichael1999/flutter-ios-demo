@@ -13,7 +13,7 @@ abstract interface class MediaPickerService {
 /// CAMERA porque la foto la toma la app de cámara del dispositivo.
 class ImagePickerMediaService implements MediaPickerService {
   ImagePickerMediaService([ImagePicker? picker])
-      : _picker = picker ?? ImagePicker();
+    : _picker = picker ?? ImagePicker();
 
   /// Suficiente para leer letreros y facturas sin enviar fotos enormes.
   static const maxDimension = 1600.0;

@@ -22,9 +22,8 @@ class NovaLogo extends StatelessWidget {
         color: NovaBrand.ink,
         borderRadius: BorderRadius.circular(size * 0.28),
         // En modo oscuro el cuadro de tinta se perdería contra el fondo.
-        border: isDark
-            ? Border.all(color: theme.colorScheme.outlineVariant)
-            : null,
+        border:
+            isDark ? Border.all(color: theme.colorScheme.outlineVariant) : null,
       ),
       child: const CustomPaint(painter: NovaMarkPainter()),
     );

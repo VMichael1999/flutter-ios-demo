@@ -4,15 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/nova_logo.dart';
 import '../../../../shared/widgets/nova_mark.dart';
+import '../../../../shared/widgets/pressable.dart';
 import '../../../assistant/presentation/pages/chat_page.dart';
 
 /// Saludo según la hora del día.
 String greetingFor(DateTime time) => switch (time.hour) {
-      < 5 => 'Buenas noches',
-      < 12 => 'Buenos días',
-      < 19 => 'Buenas tardes',
-      _ => 'Buenas noches',
-    };
+  < 5 => 'Buenas noches',
+  < 12 => 'Buenos días',
+  < 19 => 'Buenas tardes',
+  _ => 'Buenas noches',
+};
 
 /// Fecha corta en español, por ejemplo "dom 13 sep".
 String shortSpanishDate(DateTime date) {
@@ -57,17 +58,17 @@ class _HomePageState extends State<HomePage> {
 
   // Pregunta si tomar la foto o elegirla de la galería.
   void _openCamera() => context.push(
-        AppRoutes.chat,
-        extra: const ChatLaunchOptions(pickImage: true),
-      );
+    AppRoutes.chat,
+    extra: const ChatLaunchOptions(pickImage: true),
+  );
 
   // Queda escrito sin enviar: el usuario completa qué quiere buscar.
   void _openLocation() => context.push(
-        AppRoutes.chat,
-        extra: const ChatLaunchOptions(
-          draft: ChatDraft(prefix: 'Busca ', suffix: ' cerca de mí'),
-        ),
-      );
+    AppRoutes.chat,
+    extra: const ChatLaunchOptions(
+      draft: ChatDraft(prefix: 'Busca ', suffix: ' cerca de mí'),
+    ),
+  );
 
   void _showComingSoon(String feature) {
     ScaffoldMessenger.of(context)
@@ -217,59 +218,64 @@ class _VoiceCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Material(
-      color: NovaBrand.ink,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-        side: isDark
-            ? BorderSide(color: theme.colorScheme.outlineVariant)
-            : BorderSide.none,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return Pressable(
+      builder:
+          (context, onHighlightChanged) => Material(
+            color: NovaBrand.ink,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side:
+                  isDark
+                      ? BorderSide(color: theme.colorScheme.outlineVariant)
+                      : BorderSide.none,
+            ),
+            child: InkWell(
+              onTap: onTap,
+              onHighlightChanged: onHighlightChanged,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 18, 16, 18),
+                child: Row(
                   children: [
-                    Text(
-                      'Voz',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        color: NovaBrand.paper,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Voz',
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              color: NovaBrand.paper,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Conversa con NOVA sin escribir',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: NovaBrand.paper.withValues(alpha: 0.72),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Conversa con NOVA sin escribir',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: NovaBrand.paper.withValues(alpha: 0.72),
+                    const SizedBox(width: 12),
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: const BoxDecoration(
+                        color: NovaBrand.violet,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.mic_none_rounded,
+                        color: Colors.white,
+                        size: 28,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: NovaBrand.violet,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.mic_none_rounded,
-                  color: Colors.white,
-                  size: 28,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
     );
   }
 }
@@ -302,9 +308,7 @@ class _ShortcutCard extends StatelessWidget {
       label,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: theme.textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.w600,
-      ),
+      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
     );
     final subtitle = Text(
       caption,
@@ -315,54 +319,62 @@ class _ShortcutCard extends StatelessWidget {
       ),
     );
 
-    return Material(
-      color: scheme.surfaceContainerLowest,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: scheme.outlineVariant),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: badge == null
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    iconWidget,
-                    const SizedBox(height: 20),
-                    title,
-                    const SizedBox(height: 2),
-                    subtitle,
-                  ],
-                )
-              : Row(
-                  children: [
-                    iconWidget,
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [title, subtitle],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text(badge, style: theme.textTheme.labelSmall),
-                    ),
-                  ],
-                ),
-        ),
-      ),
+    return Pressable(
+      builder:
+          (context, onHighlightChanged) => Material(
+            color: scheme.surfaceContainerLowest,
+            clipBehavior: Clip.antiAlias,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: scheme.outlineVariant),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              onHighlightChanged: onHighlightChanged,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child:
+                    badge == null
+                        ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            iconWidget,
+                            const SizedBox(height: 20),
+                            title,
+                            const SizedBox(height: 2),
+                            subtitle,
+                          ],
+                        )
+                        : Row(
+                          children: [
+                            iconWidget,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [title, subtitle],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: scheme.surfaceContainerHigh,
+                                borderRadius: BorderRadius.circular(99),
+                              ),
+                              child: Text(
+                                badge,
+                                style: theme.textTheme.labelSmall,
+                              ),
+                            ),
+                          ],
+                        ),
+              ),
+            ),
+          ),
     );
   }
 }

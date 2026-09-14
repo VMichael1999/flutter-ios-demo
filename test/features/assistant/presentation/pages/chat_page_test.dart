@@ -142,14 +142,14 @@ void main() {
 
       await tester.enterText(find.byType(TextField), 'Busca');
       await tester.tap(find.byTooltip('Dictar'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.byTooltip('Dejar de dictar'), findsOneWidget);
 
       speech.say('farmacias');
-      await tester.pump();
+      await tester.pumpAndSettle();
       speech.say('farmacias abiertas', isFinal: true);
       await speech.finish();
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       final field = tester.widget<TextField>(find.byType(TextField));
       expect(field.controller!.text, 'Busca farmacias abiertas');
@@ -169,9 +169,9 @@ void main() {
       await pumpChat(tester, speechService: speech);
 
       await tester.tap(find.byTooltip('Dictar'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Dejar de dictar'));
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(speech.stopCalls, 1);
       expect(find.byTooltip('Dictar'), findsOneWidget);
@@ -182,11 +182,11 @@ void main() {
       await pumpChat(tester, speechService: speech);
 
       await tester.tap(find.byTooltip('Dictar'));
-      await tester.pump();
+      await tester.pumpAndSettle();
       await speech.fail(
         const SpeechFailure('NOVA necesita permiso para usar el micrófono.'),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
 
       expect(
         find.text('NOVA necesita permiso para usar el micrófono.'),

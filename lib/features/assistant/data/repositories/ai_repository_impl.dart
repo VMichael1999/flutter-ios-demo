@@ -19,8 +19,10 @@ class AiRepositoryImpl implements AiRepository {
     // `await for` en lugar de `yield*`: con `yield*` los errores del stream
     // interno se reenvían tal cual y este `try` no llega a traducirlos.
     try {
-      await for (final chunk
-          in _dataSource.streamReply(message, attachment: attachment)) {
+      await for (final chunk in _dataSource.streamReply(
+        message,
+        attachment: attachment,
+      )) {
         yield chunk;
       }
     } on AiFailure {

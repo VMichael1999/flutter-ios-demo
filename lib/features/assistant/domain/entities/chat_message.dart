@@ -27,12 +27,12 @@ class ChatMessage extends Equatable {
     bool isStreaming = false,
     List<Place> places = const [],
   }) : this(
-          id: id,
-          role: ChatRole.assistant,
-          text: text,
-          isStreaming: isStreaming,
-          places: places,
-        );
+         id: id,
+         role: ChatRole.assistant,
+         text: text,
+         isStreaming: isStreaming,
+         places: places,
+       );
 
   final String id;
   final ChatRole role;
@@ -51,11 +51,7 @@ class ChatMessage extends Equatable {
 
   bool get isAssistant => role == ChatRole.assistant;
 
-  ChatMessage copyWith({
-    String? text,
-    bool? isStreaming,
-    List<Place>? places,
-  }) {
+  ChatMessage copyWith({String? text, bool? isStreaming, List<Place>? places}) {
     return ChatMessage(
       id: id,
       role: role,

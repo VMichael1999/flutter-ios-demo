@@ -13,10 +13,12 @@ class FakeAiDataSource implements AiRemoteDataSource {
     String message, {
     ChatAttachment? attachment,
   }) async* {
-    final received = attachment == null
-        ? 'Recibí tu mensaje: "$message".'
-        : 'Recibí tu imagen y tu mensaje: "$message".';
-    final reply = 'Estoy en modo demo porque Firebase todavía no está '
+    final received =
+        attachment == null
+            ? 'Recibí tu mensaje: "$message".'
+            : 'Recibí tu imagen y tu mensaje: "$message".';
+    final reply =
+        'Estoy en modo demo porque Firebase todavía no está '
         'configurado. $received Cuando conectemos Firebase AI Logic, te '
         'responderé con Gemini en tiempo real.';
 

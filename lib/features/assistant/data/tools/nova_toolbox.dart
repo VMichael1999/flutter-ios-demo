@@ -16,26 +16,31 @@ class NovaToolbox {
   final SearchNearbyPlaces _searchNearbyPlaces;
   List<Place>? _foundPlaces;
 
-  late final AutoFunctionDeclaration searchNearbyPlaces =
-      AutoFunctionDeclaration(
+  late final AutoFunctionDeclaration
+  searchNearbyPlaces = AutoFunctionDeclaration(
     name: searchNearbyPlacesName,
-    description: 'Busca lugares cerca de la ubicación actual del usuario y '
+    description:
+        'Busca lugares cerca de la ubicación actual del usuario y '
         'devuelve los más cercanos con su distancia en metros. También sirve '
         'para ubicar un local concreto por su nombre, por ejemplo el que se '
         'lee en el letrero de una foto.',
     parameters: {
       'categoria': Schema.enumString(
-        enumValues: [for (final category in PlaceCategory.values) category.name],
+        enumValues: [
+          for (final category in PlaceCategory.values) category.name,
+        ],
         description: 'Tipo de lugar que busca el usuario.',
       ),
       'radioMetros': Schema.integer(
-        description: 'Radio máximo de búsqueda en metros. Por defecto '
+        description:
+            'Radio máximo de búsqueda en metros. Por defecto '
             '${AppConfig.nearbyRadiusMeters}.',
         minimum: SearchNearbyPlaces.minRadiusMeters,
         maximum: AppConfig.nearbyRadiusMeters,
       ),
       'nombre': Schema.string(
-        description: 'Nombre del local, si el usuario lo menciona o se lee en '
+        description:
+            'Nombre del local, si el usuario lo menciona o se lee en '
             'una imagen.',
       ),
     },
@@ -44,8 +49,8 @@ class NovaToolbox {
   );
 
   List<Tool> get tools => [
-        Tool.functionDeclarations([searchNearbyPlaces]),
-      ];
+    Tool.functionDeclarations([searchNearbyPlaces]),
+  ];
 
   /// Lugares encontrados desde la última lectura; se vacía al leerlos.
   List<Place>? takeFoundPlaces() {

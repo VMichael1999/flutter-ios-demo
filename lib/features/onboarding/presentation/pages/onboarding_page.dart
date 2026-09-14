@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../../core/theme/motion.dart';
+import '../../../../shared/widgets/entrance.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -50,9 +52,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
       _finish();
       return;
     }
+    // La página se desplaza dentro de la pantalla: curva de ida y vuelta.
     _pageController.nextPage(
       duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
+      curve: Motion.easeInOut,
     );
   }
 
@@ -77,9 +80,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: PageView.builder(
                   controller: _pageController,
                   itemCount: _slides.length,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
-                  itemBuilder: (context, index) =>
-                      _SlideView(slide: _slides[index]),
+                  onPageChanged:
+                      (index) => setState(() => _currentPage = index),
+                  itemBuilder:
+                      (context, index) => _SlideView(slide: _slides[index]),
                 ),
               ),
               Row(
@@ -87,14 +91,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 children: [
                   for (var i = 0; i < _slides.length; i++)
                     AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
+                      duration: Motion.enter,
+                      curve: Motion.easeInOut,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       width: i == _currentPage ? 24 : 8,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: i == _currentPage
-                            ? scheme.primary
-                            : scheme.outlineVariant,
+                        color:
+                            i == _currentPage
+                                ? scheme.primary
+                                : scheme.outlineVariant,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -135,32 +141,39 @@ class _SlideView extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
+    // Solo se ve una vez: aquí sí vale la pena una entrada escalonada.
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            color: scheme.primaryContainer,
-            shape: BoxShape.circle,
+        Entrance(
+          child: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(slide.icon, size: 56, color: scheme.onPrimaryContainer),
           ),
-          child: Icon(slide.icon, size: 56, color: scheme.onPrimaryContainer),
         ),
         const SizedBox(height: 40),
-        Text(
-          slide.title,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w700,
+        Entrance(
+          delay: Motion.stagger,
+          child: Text(
+            slide.title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.headlineSmall,
           ),
         ),
         const SizedBox(height: 12),
-        Text(
-          slide.description,
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: scheme.onSurfaceVariant,
+        Entrance(
+          delay: Motion.stagger * 2,
+          child: Text(
+            slide.description,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],

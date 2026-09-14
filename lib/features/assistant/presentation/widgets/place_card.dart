@@ -7,9 +7,9 @@ import '../../../places/domain/entities/place_category.dart';
 
 /// Ruta en Google Maps hasta [place] (web, Android e iOS).
 Uri directionsUri(Place place) => Uri.https('www.google.com', '/maps/dir/', {
-      'api': '1',
-      'destination': '${place.location.latitude},${place.location.longitude}',
-    });
+  'api': '1',
+  'destination': '${place.location.latitude},${place.location.longitude}',
+});
 
 Future<void> openDirections(Place place) async {
   await launchUrl(directionsUri(place), mode: LaunchMode.externalApplication);
@@ -92,15 +92,15 @@ class PlaceCard extends StatelessWidget {
   }
 
   static IconData _iconFor(PlaceCategory category) => switch (category) {
-        PlaceCategory.restaurant || PlaceCategory.fastFood => Icons.restaurant,
-        PlaceCategory.cafe => Icons.local_cafe_outlined,
-        PlaceCategory.bar => Icons.local_bar_outlined,
-        PlaceCategory.pharmacy => Icons.local_pharmacy_outlined,
-        PlaceCategory.hospital => Icons.local_hospital_outlined,
-        PlaceCategory.bank || PlaceCategory.atm => Icons.account_balance_outlined,
-        PlaceCategory.fuel => Icons.local_gas_station_outlined,
-        PlaceCategory.supermarket => Icons.local_grocery_store_outlined,
-        PlaceCategory.park => Icons.park_outlined,
-        PlaceCategory.hotel => Icons.hotel_outlined,
-      };
+    PlaceCategory.restaurant || PlaceCategory.fastFood => Icons.restaurant,
+    PlaceCategory.cafe => Icons.local_cafe_outlined,
+    PlaceCategory.bar => Icons.local_bar_outlined,
+    PlaceCategory.pharmacy => Icons.local_pharmacy_outlined,
+    PlaceCategory.hospital => Icons.local_hospital_outlined,
+    PlaceCategory.bank || PlaceCategory.atm => Icons.account_balance_outlined,
+    PlaceCategory.fuel => Icons.local_gas_station_outlined,
+    PlaceCategory.supermarket => Icons.local_grocery_store_outlined,
+    PlaceCategory.park => Icons.park_outlined,
+    PlaceCategory.hotel => Icons.hotel_outlined,
+  };
 }
