@@ -16,9 +16,9 @@ voz, documentos y la ubicación para ejecutar acciones reales en el dispositivo.
 - [x] Splash, Onboarding y Home
 - [x] Pantalla de chat con BLoC
 - [x] Streaming de respuestas, indicador de escritura y cancelación
-- [ ] Conectar Gemini mediante Firebase AI Logic (pendiente de configurar Firebase)
+- [x] Gemini mediante Firebase AI Logic, protegido con App Check
 
-Mientras Firebase no esté configurado la app arranca en **modo demo** con
+En plataformas sin configuración de Firebase la app arranca en **modo demo** con
 respuestas simuladas, así la interfaz y los tests funcionan sin credenciales.
 
 ## Stack
@@ -76,17 +76,29 @@ flutter analyze
 flutter test
 ```
 
-## Conectar Firebase AI Logic
+## Firebase AI Logic y App Check
 
-1. Crear un proyecto en la [consola de Firebase](https://console.firebase.google.com)
-   y activar **AI Logic** con la **Gemini Developer API**.
-2. Instalar las CLIs: `npm install -g firebase-tools` y
-   `dart pub global activate flutterfire_cli`.
-3. Iniciar sesión con `firebase login` y ejecutar `flutterfire configure`.
-4. Pasar `DefaultFirebaseOptions.currentPlatform` a `Firebase.initializeApp`
-   en `lib/main.dart`.
+NOVA usa el proyecto de Firebase `nova-ai-7b36c` con **AI Logic (Gemini Developer
+API)**. La configuración de web, Android e iOS está en `lib/firebase_options.dart`;
+la API key de Gemini se queda en Firebase y nunca se incluye en la app.
 
-La API key de Gemini se queda en Firebase: nunca se incluye en el código de la app.
+AI Logic exige **App Check**: sin un token válido Gemini responde `401`.
+
+- **Desarrollo** (`flutter run` en debug o `--dart-define=NOVA_APP_CHECK_DEBUG=true`):
+  se usan los proveedores de depuración. Al arrancar, la app imprime un
+  *debug token*; regístralo en la consola en **App Check → Apps → ⋮ →
+  Administrar tokens de depuración**. Nunca lo subas al repositorio y bórralo
+  al terminar.
+- **Producción**: Play Integrity (Android), App Attest con DeviceCheck de
+  respaldo (iOS) y reCAPTCHA Enterprise en web con
+  `--dart-define=NOVA_RECAPTCHA_SITE_KEY=<clave de sitio>`.
+
+Probar la web en local con App Check en modo depuración:
+
+```bash
+flutter build web --release --dart-define=NOVA_APP_CHECK_DEBUG=true
+python -m http.server 8080 --directory build/web
+```
 
 ## Probar en iOS desde Windows
 
