@@ -40,7 +40,7 @@ GoRouter createAppRouter() {
               mediaPicker: getIt(),
               initialPrompt: options.prompt,
               initialDraft: options.draft,
-              initialImageSource: options.imageSource,
+              pickImageOnOpen: options.pickImage,
               aiMode: getIt<AiMode>(),
             ),
           );

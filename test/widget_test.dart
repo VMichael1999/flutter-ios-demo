@@ -38,6 +38,22 @@ void main() {
     expect(openChatButton, findsOneWidget);
   });
 
+  testWidgets('Cámara abre el chat preguntando si usar cámara o galería',
+      (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    await openHome(tester);
+
+    await tester.tap(find.text('Cámara'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(ChatPage), findsOneWidget);
+    expect(find.text('Tomar foto'), findsOneWidget);
+    expect(find.text('Elegir de la galería'), findsOneWidget);
+  });
+
   testWidgets('Ubicación abre el chat con "Busca … cerca de mí" por completar',
       (tester) async {
     // Pantalla de teléfono (360x800 lógicos), como un Galaxy A03.

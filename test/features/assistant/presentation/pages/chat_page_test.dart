@@ -14,9 +14,18 @@ import '../../../../fixtures/places_fixtures.dart';
 
 class _MockAiRepository extends Mock implements AiRepository {}
 
-class _NoImageMediaPicker implements MediaPickerService {
+/// Registra de dónde se pidió la imagen y devuelve [result].
+class _RecordingMediaPicker implements MediaPickerService {
+  _RecordingMediaPicker([this.result]);
+
+  final ChatAttachment? result;
+  final requestedSources = <MediaSource>[];
+
   @override
-  Future<ChatAttachment?> pickImage(MediaSource source) async => null;
+  Future<ChatAttachment?> pickImage(MediaSource source) async {
+    requestedSources.add(source);
+    return result;
+  }
 }
 
 void main() {
@@ -26,7 +35,12 @@ void main() {
 
   setUp(() => repository = _MockAiRepository());
 
-  Future<void> pumpChat(WidgetTester tester, {ChatDraft? draft}) async {
+  Future<void> pumpChat(
+    WidgetTester tester, {
+    MediaPickerService? mediaPicker,
+    ChatDraft? draft,
+    bool pickImageOnOpen = false,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
         home: BlocProvider(
@@ -35,8 +49,9 @@ void main() {
             resetConversation: ResetConversation(repository),
           ),
           child: ChatPage(
-            mediaPicker: _NoImageMediaPicker(),
+            mediaPicker: mediaPicker ?? _RecordingMediaPicker(),
             initialDraft: draft,
+            pickImageOnOpen: pickImageOnOpen,
           ),
         ),
       ),
@@ -73,5 +88,44 @@ void main() {
 
     final field = tester.widget<TextField>(find.byType(TextField));
     expect(field.controller!.text, isEmpty);
+  });
+
+  testWidgets('pregunta si usar la cámara o la galería antes de abrir nada',
+      (tester) async {
+    final picker = _RecordingMediaPicker();
+    await pumpChat(tester, mediaPicker: picker, pickImageOnOpen: true);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Añadir una imagen'), findsOneWidget);
+    expect(find.text('Tomar foto'), findsOneWidget);
+    expect(find.text('Elegir de la galería'), findsOneWidget);
+    expect(picker.requestedSources, isEmpty);
+  });
+
+  testWidgets('elegir galería abre la galería y muestra la vista previa',
+      (tester) async {
+    final picker = _RecordingMediaPicker(testImageAttachment);
+    await pumpChat(tester, mediaPicker: picker, pickImageOnOpen: true);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Elegir de la galería'));
+    await tester.pumpAndSettle();
+
+    expect(picker.requestedSources, [MediaSource.gallery]);
+    expect(find.bySemanticsLabel('Imagen para enviar'), findsOneWidget);
+  });
+
+  testWidgets('cerrar el menú sin elegir deja el chat como estaba',
+      (tester) async {
+    final picker = _RecordingMediaPicker();
+    await pumpChat(tester, mediaPicker: picker, pickImageOnOpen: true);
+    await tester.pumpAndSettle();
+
+    await tester.tapAt(const Offset(20, 20));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Añadir una imagen'), findsNothing);
+    expect(picker.requestedSources, isEmpty);
+    expect(find.text('Pregúntame lo que quieras'), findsOneWidget);
   });
 }

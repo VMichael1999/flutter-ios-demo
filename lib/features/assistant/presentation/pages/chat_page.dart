@@ -9,13 +9,15 @@ import '../widgets/chat_input.dart';
 import '../widgets/message_bubble.dart';
 
 /// Cómo abrir el chat: con un mensaje inicial, un texto a medio escribir o
-/// directamente con la cámara.
+/// preguntando de dónde tomar una imagen.
 class ChatLaunchOptions {
-  const ChatLaunchOptions({this.prompt, this.draft, this.imageSource});
+  const ChatLaunchOptions({this.prompt, this.draft, this.pickImage = false});
 
   final String? prompt;
   final ChatDraft? draft;
-  final MediaSource? imageSource;
+
+  /// Pregunta al entrar si usar la cámara o la galería.
+  final bool pickImage;
 }
 
 /// Texto que se deja escrito, sin enviar, con el cursor entre [prefix] y
@@ -37,7 +39,7 @@ class ChatPage extends StatefulWidget {
     required this.mediaPicker,
     this.initialPrompt,
     this.initialDraft,
-    this.initialImageSource,
+    this.pickImageOnOpen = false,
     this.aiMode = AiMode.firebase,
   });
 
@@ -49,8 +51,8 @@ class ChatPage extends StatefulWidget {
   /// Texto que queda escrito para que el usuario lo complete.
   final ChatDraft? initialDraft;
 
-  /// Abre la cámara o la galería al entrar.
-  final MediaSource? initialImageSource;
+  /// Al entrar, pregunta si tomar una foto o elegirla de la galería.
+  final bool pickImageOnOpen;
   final AiMode aiMode;
 
   @override
@@ -79,8 +81,10 @@ class _ChatPageState extends State<ChatPage> {
         if (mounted) _inputFocus.requestFocus();
       });
     }
-    if (widget.initialImageSource case final source?) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _pickImage(source));
+    if (widget.pickImageOnOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _chooseImageSource();
+      });
     }
   }
 
@@ -100,6 +104,13 @@ class _ChatPageState extends State<ChatPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Text(
+                'Añadir una imagen',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
               title: const Text('Tomar foto'),

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../assistant/data/services/media_picker_service.dart';
 import '../../../assistant/presentation/pages/chat_page.dart';
 import '../../../../shared/widgets/nova_logo.dart';
 
@@ -19,7 +18,8 @@ class _HomePageState extends State<HomePage> {
     _QuickAction(
       icon: Icons.photo_camera_outlined,
       label: 'Cámara',
-      imageSource: MediaSource.camera,
+      // Pregunta si tomar la foto o elegirla de la galería.
+      pickImage: true,
     ),
     _QuickAction(icon: Icons.mic_none_rounded, label: 'Voz'),
     _QuickAction(icon: Icons.description_outlined, label: 'Documento'),
@@ -50,10 +50,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onQuickAction(_QuickAction action) {
-    if (action.imageSource case final source?) {
+    if (action.pickImage) {
       context.push(
         AppRoutes.chat,
-        extra: ChatLaunchOptions(imageSource: source),
+        extra: const ChatLaunchOptions(pickImage: true),
       );
     } else if (action.draft case final draft?) {
       context.push(AppRoutes.chat, extra: ChatLaunchOptions(draft: draft));
@@ -165,7 +165,7 @@ class _QuickAction {
     required this.icon,
     required this.label,
     this.draft,
-    this.imageSource,
+    this.pickImage = false,
   });
 
   final IconData icon;
@@ -174,8 +174,8 @@ class _QuickAction {
   /// Texto que queda escrito en el chat para que el usuario lo complete.
   final ChatDraft? draft;
 
-  /// Abre el chat con la cámara o la galería.
-  final MediaSource? imageSource;
+  /// Abre el chat preguntando si usar la cámara o la galería.
+  final bool pickImage;
 }
 
 class _QuickActionCard extends StatelessWidget {
