@@ -10,19 +10,23 @@ void main() {
     return tester.pumpWidget(
       MaterialApp(
         home: Builder(
-          builder: (context) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              disableAnimations: disableAnimations,
-            ),
-            child: const Scaffold(body: Center(child: NovaThinkingIndicator())),
-          ),
+          builder:
+              (context) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(disableAnimations: disableAnimations),
+                child: const Scaffold(
+                  body: Center(child: NovaThinkingIndicator()),
+                ),
+              ),
         ),
       ),
     );
   }
 
-  testWidgets('dibuja a NOVA con su texto y una etiqueta accesible',
-      (tester) async {
+  testWidgets('dibuja a NOVA con su texto y una etiqueta accesible', (
+    tester,
+  ) async {
     await pumpIndicator(tester);
 
     expect(find.text('NOVA está pensando…'), findsOneWidget);
@@ -45,8 +49,9 @@ void main() {
     expect(tester.hasRunningAnimations, isTrue);
   });
 
-  testWidgets('se queda quieto si el usuario desactivó las animaciones',
-      (tester) async {
+  testWidgets('se queda quieto si el usuario desactivó las animaciones', (
+    tester,
+  ) async {
     await pumpIndicator(tester, disableAnimations: true);
 
     await tester.pumpAndSettle();

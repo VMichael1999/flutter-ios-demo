@@ -4,20 +4,25 @@ import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
 import 'package:nova_ai/features/assistant/presentation/widgets/message_bubble.dart';
 import 'package:nova_ai/features/assistant/presentation/widgets/nova_thinking_indicator.dart';
 import 'package:nova_ai/features/assistant/presentation/widgets/place_card.dart';
+import 'package:nova_ai/features/assistant/presentation/widgets/places_map.dart';
 
+import '../../../../fixtures/map_fakes.dart';
 import '../../../../fixtures/places_fixtures.dart';
 
 void main() {
+  // Las respuestas con lugares incluyen un mapa: sin descargas en los tests.
+  setUp(() => PlacesMap.debugTileProvider = BlankTileProvider());
+  tearDown(() => PlacesMap.debugTileProvider = null);
+
   Future<void> pumpBubble(WidgetTester tester, ChatMessage message) {
     return tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: MessageBubble(message: message)),
-      ),
+      MaterialApp(home: Scaffold(body: MessageBubble(message: message))),
     );
   }
 
-  testWidgets('muestra el texto y una tarjeta por lugar con su distancia',
-      (tester) async {
+  testWidgets('muestra el texto y una tarjeta por lugar con su distancia', (
+    tester,
+  ) async {
     await pumpBubble(
       tester,
       const ChatMessage.assistant(
@@ -27,12 +32,18 @@ void main() {
       ),
     );
 
-    expect(find.text('Estos son los restaurantes más cercanos:'), findsOneWidget);
+    expect(
+      find.text('Estos son los restaurantes más cercanos:'),
+      findsOneWidget,
+    );
     expect(find.byType(PlaceCard), findsNWidgets(2));
     expect(find.text('Chifa Miraflores'), findsOneWidget);
     expect(find.text('850 m'), findsOneWidget);
     expect(find.text('1.3 km'), findsOneWidget);
-    expect(find.text('Restaurante · Avenida Angamos Oeste 120'), findsOneWidget);
+    expect(
+      find.text('Restaurante · Avenida Angamos Oeste 120'),
+      findsOneWidget,
+    );
     expect(find.byTooltip('Cómo llegar'), findsNWidgets(2));
   });
 
@@ -45,8 +56,9 @@ void main() {
     expect(find.bySemanticsLabel('Imagen enviada'), findsOneWidget);
   });
 
-  testWidgets('muestra a NOVA pensando mientras llega la respuesta',
-      (tester) async {
+  testWidgets('muestra a NOVA pensando mientras llega la respuesta', (
+    tester,
+  ) async {
     await pumpBubble(
       tester,
       const ChatMessage.assistant(id: '1', isStreaming: true),
@@ -56,8 +68,9 @@ void main() {
     expect(find.text('NOVA está pensando…'), findsOneWidget);
   });
 
-  testWidgets('deja de mostrar a NOVA pensando cuando llega el primer texto',
-      (tester) async {
+  testWidgets('deja de mostrar a NOVA pensando cuando llega el primer texto', (
+    tester,
+  ) async {
     await pumpBubble(
       tester,
       const ChatMessage.assistant(id: '1', text: 'Hola', isStreaming: true),

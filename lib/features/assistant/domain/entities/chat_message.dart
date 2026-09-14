@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/utils/geo.dart';
 import '../../../places/domain/entities/place.dart';
 import 'chat_attachment.dart';
 
@@ -12,6 +13,7 @@ class ChatMessage extends Equatable {
     required this.text,
     this.isStreaming = false,
     this.places = const [],
+    this.searchCenter,
     this.attachment,
     this.hadImage = false,
   });
@@ -27,12 +29,14 @@ class ChatMessage extends Equatable {
     String text = '',
     bool isStreaming = false,
     List<Place> places = const [],
+    GeoPoint? searchCenter,
   }) : this(
          id: id,
          role: ChatRole.assistant,
          text: text,
          isStreaming: isStreaming,
          places: places,
+         searchCenter: searchCenter,
        );
 
   final String id;
@@ -44,6 +48,9 @@ class ChatMessage extends Equatable {
 
   /// Lugares encontrados por NOVA para esta respuesta.
   final List<Place> places;
+
+  /// Ubicación del usuario cuando se buscaron los [places].
+  final GeoPoint? searchCenter;
 
   /// Imagen que el usuario envió con el mensaje.
   final ChatAttachment? attachment;
@@ -57,13 +64,19 @@ class ChatMessage extends Equatable {
 
   bool get hasImage => attachment != null || hadImage;
 
-  ChatMessage copyWith({String? text, bool? isStreaming, List<Place>? places}) {
+  ChatMessage copyWith({
+    String? text,
+    bool? isStreaming,
+    List<Place>? places,
+    GeoPoint? searchCenter,
+  }) {
     return ChatMessage(
       id: id,
       role: role,
       text: text ?? this.text,
       isStreaming: isStreaming ?? this.isStreaming,
       places: places ?? this.places,
+      searchCenter: searchCenter ?? this.searchCenter,
       attachment: attachment,
       hadImage: hadImage,
     );
@@ -76,6 +89,7 @@ class ChatMessage extends Equatable {
     text,
     isStreaming,
     places,
+    searchCenter,
     attachment,
     hadImage,
   ];

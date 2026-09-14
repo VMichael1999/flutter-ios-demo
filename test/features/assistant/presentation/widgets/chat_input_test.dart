@@ -49,8 +49,9 @@ void main() {
     expect(find.text('Escribe o dicta a NOVA…'), findsOneWidget);
   });
 
-  testWidgets('muestra la vista previa y permite quitar la imagen',
-      (tester) async {
+  testWidgets('muestra la vista previa y permite quitar la imagen', (
+    tester,
+  ) async {
     var removed = false;
     await pumpInput(
       tester,
@@ -90,8 +91,9 @@ void main() {
     expect(micTapped, isTrue);
   });
 
-  testWidgets('mientras dicta avisa que escucha y permite terminar',
-      (tester) async {
+  testWidgets('mientras dicta avisa que escucha y permite terminar', (
+    tester,
+  ) async {
     await pumpInput(tester, isListening: true, onMicTap: () {});
 
     expect(find.text('Te escucho…'), findsOneWidget);

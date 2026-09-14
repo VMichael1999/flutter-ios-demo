@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../../core/utils/geo.dart';
 import '../../../places/domain/entities/place.dart';
 import '../../../places/domain/entities/place_category.dart';
 import '../../../places/domain/usecases/search_nearby_places.dart';
@@ -15,6 +16,10 @@ class NovaToolbox {
 
   final SearchNearbyPlaces _searchNearbyPlaces;
   List<Place>? _foundPlaces;
+  GeoPoint? _foundCenter;
+
+  /// Ubicación desde la que se hizo la última búsqueda con resultados.
+  GeoPoint? get lastSearchCenter => _foundCenter;
 
   late final AutoFunctionDeclaration
   searchNearbyPlaces = AutoFunctionDeclaration(
@@ -91,6 +96,7 @@ class NovaToolbox {
         name: name,
       );
       _foundPlaces = result.places;
+      _foundCenter = result.center;
       return {
         'categoria': category.label,
         if (name != null) 'nombreBuscado': name,

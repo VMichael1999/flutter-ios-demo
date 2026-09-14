@@ -105,6 +105,8 @@ void main() {
 
       expect(toolbox.takeFoundPlaces(), [chifaPlace, bodegaPlace]);
       expect(toolbox.takeFoundPlaces(), isNull);
+      // Desde dónde se buscó, para marcar al usuario en el mapa.
+      expect(toolbox.lastSearchCenter, testCenter);
       verify(
         () => searchNearbyPlaces(
           category: PlaceCategory.restaurant,

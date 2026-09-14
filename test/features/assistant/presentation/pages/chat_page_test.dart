@@ -48,10 +48,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: BlocProvider(
-          create: (_) => ChatBloc(
-            sendMessage: SendMessage(repository),
-            resetConversation: ResetConversation(repository),
-          ),
+          create:
+              (_) => ChatBloc(
+                sendMessage: SendMessage(repository),
+                resetConversation: ResetConversation(repository),
+              ),
           child: ChatPage(
             mediaPicker: mediaPicker ?? _RecordingMediaPicker(),
             speechService: speechService,
@@ -65,28 +66,27 @@ void main() {
   }
 
   testWidgets(
-      'deja escrito "Busca … cerca de mí" con el cursor en el hueco, sin enviarlo',
-      (tester) async {
-    await pumpChat(
-      tester,
-      draft: const ChatDraft(prefix: 'Busca ', suffix: ' cerca de mí'),
-    );
+    'deja escrito "Busca … cerca de mí" con el cursor en el hueco, sin enviarlo',
+    (tester) async {
+      await pumpChat(
+        tester,
+        draft: const ChatDraft(prefix: 'Busca ', suffix: ' cerca de mí'),
+      );
 
-    final field = tester.widget<TextField>(find.byType(TextField));
-    expect(field.controller!.text, 'Busca  cerca de mí');
-    expect(
-      field.controller!.selection,
-      const TextSelection.collapsed(offset: 6),
-    );
-    expect(field.focusNode!.hasFocus, isTrue);
-    expect(find.text('Pregúntame lo que quieras'), findsOneWidget);
-    verifyNever(
-      () => repository.streamReply(
-        any(),
-        attachment: any(named: 'attachment'),
-      ),
-    );
-  });
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'Busca  cerca de mí');
+      expect(
+        field.controller!.selection,
+        const TextSelection.collapsed(offset: 6),
+      );
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(find.text('Pregúntame lo que quieras'), findsOneWidget);
+      verifyNever(
+        () =>
+            repository.streamReply(any(), attachment: any(named: 'attachment')),
+      );
+    },
+  );
 
   testWidgets('sin borrador el campo empieza vacío', (tester) async {
     await pumpChat(tester);
@@ -95,8 +95,9 @@ void main() {
     expect(field.controller!.text, isEmpty);
   });
 
-  testWidgets('pregunta si usar la cámara o la galería antes de abrir nada',
-      (tester) async {
+  testWidgets('pregunta si usar la cámara o la galería antes de abrir nada', (
+    tester,
+  ) async {
     final picker = _RecordingMediaPicker();
     await pumpChat(tester, mediaPicker: picker, pickImageOnOpen: true);
     await tester.pumpAndSettle();
@@ -107,8 +108,9 @@ void main() {
     expect(picker.requestedSources, isEmpty);
   });
 
-  testWidgets('elegir galería abre la galería y muestra la vista previa',
-      (tester) async {
+  testWidgets('elegir galería abre la galería y muestra la vista previa', (
+    tester,
+  ) async {
     final picker = _RecordingMediaPicker(testImageAttachment);
     await pumpChat(tester, mediaPicker: picker, pickImageOnOpen: true);
     await tester.pumpAndSettle();
@@ -120,8 +122,9 @@ void main() {
     expect(find.bySemanticsLabel('Imagen para enviar'), findsOneWidget);
   });
 
-  testWidgets('cerrar el menú sin elegir deja el chat como estaba',
-      (tester) async {
+  testWidgets('cerrar el menú sin elegir deja el chat como estaba', (
+    tester,
+  ) async {
     final picker = _RecordingMediaPicker();
     await pumpChat(tester, mediaPicker: picker, pickImageOnOpen: true);
     await tester.pumpAndSettle();
@@ -135,8 +138,9 @@ void main() {
   });
 
   group('dictado', () {
-    testWidgets('lo dictado aparece en el campo después de lo escrito',
-        (tester) async {
+    testWidgets('lo dictado aparece en el campo después de lo escrito', (
+      tester,
+    ) async {
       final speech = FakeSpeechService();
       await pumpChat(tester, speechService: speech);
 
@@ -156,15 +160,14 @@ void main() {
       expect(find.byTooltip('Dictar'), findsOneWidget);
       // Dictar no envía: la persona revisa el texto antes.
       verifyNever(
-        () => repository.streamReply(
-          any(),
-          attachment: any(named: 'attachment'),
-        ),
+        () =>
+            repository.streamReply(any(), attachment: any(named: 'attachment')),
       );
     });
 
-    testWidgets('tocar de nuevo el micrófono termina el dictado',
-        (tester) async {
+    testWidgets('tocar de nuevo el micrófono termina el dictado', (
+      tester,
+    ) async {
       final speech = FakeSpeechService();
       await pumpChat(tester, speechService: speech);
 

@@ -5,6 +5,7 @@ import '../../../../shared/widgets/entrance.dart';
 import '../../domain/entities/chat_message.dart';
 import 'nova_thinking_indicator.dart';
 import 'place_card.dart';
+import 'places_map.dart';
 
 class MessageBubble extends StatelessWidget {
   const MessageBubble({
@@ -113,12 +114,26 @@ class MessageBubble extends StatelessWidget {
                   child: content,
                 ),
               ),
+              // Mapa con los lugares numerados y, debajo, una tarjeta por
+              // lugar con el mismo número.
+              if (message.places.isNotEmpty)
+                Entrance(
+                  enabled: animatePlaces,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: PlacesMap(
+                      places: message.places,
+                      userLocation: message.searchCenter,
+                    ),
+                  ),
+                ),
               for (final (index, place) in message.places.indexed)
                 Entrance(
                   enabled: animatePlaces,
-                  delay: Motion.stagger * index,
+                  delay: Motion.stagger * (index + 1),
                   child: PlaceCard(
                     place: place,
+                    number: index + 1,
                     onDirections: () => openDirections(place),
                   ),
                 ),

@@ -44,13 +44,17 @@ class FirebaseAiDataSource implements AiRemoteDataSource {
     await for (final response in chat.sendMessageStream(content)) {
       // Las funciones se ejecutan entre respuestas del modelo.
       final places = _toolbox.takeFoundPlaces();
-      if (places != null) yield AiPlacesChunk(places);
+      if (places != null) {
+        yield AiPlacesChunk(places, center: _toolbox.lastSearchCenter);
+      }
 
       final text = response.text;
       if (text != null && text.isNotEmpty) yield AiTextChunk(text);
     }
     final places = _toolbox.takeFoundPlaces();
-    if (places != null) yield AiPlacesChunk(places);
+    if (places != null) {
+      yield AiPlacesChunk(places, center: _toolbox.lastSearchCenter);
+    }
   }
 
   @override

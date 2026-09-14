@@ -15,16 +15,38 @@ Future<void> openDirections(Place place) async {
   await launchUrl(directionsUri(place), mode: LaunchMode.externalApplication);
 }
 
+IconData iconForCategory(PlaceCategory category) => switch (category) {
+  PlaceCategory.restaurant || PlaceCategory.fastFood => Icons.restaurant,
+  PlaceCategory.cafe => Icons.local_cafe_outlined,
+  PlaceCategory.bar => Icons.local_bar_outlined,
+  PlaceCategory.pharmacy => Icons.local_pharmacy_outlined,
+  PlaceCategory.hospital => Icons.local_hospital_outlined,
+  PlaceCategory.bank || PlaceCategory.atm => Icons.account_balance_outlined,
+  PlaceCategory.fuel => Icons.local_gas_station_outlined,
+  PlaceCategory.supermarket => Icons.local_grocery_store_outlined,
+  PlaceCategory.park => Icons.park_outlined,
+  PlaceCategory.hotel => Icons.hotel_outlined,
+};
+
 class PlaceCard extends StatelessWidget {
-  const PlaceCard({super.key, required this.place, this.onDirections});
+  const PlaceCard({
+    super.key,
+    required this.place,
+    this.onDirections,
+    this.number,
+  });
 
   final Place place;
   final VoidCallback? onDirections;
+
+  /// Número del punto en el mapa. Sin número se muestra el ícono del tipo.
+  final int? number;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
+    final number = this.number;
     final details = [
       place.category.displayName,
       if (place.address != null) place.address!,
@@ -39,13 +61,26 @@ class PlaceCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: scheme.primaryContainer,
-                child: Icon(
-                  _iconFor(place.category),
-                  color: scheme.onPrimaryContainer,
+              if (number == null)
+                CircleAvatar(
+                  backgroundColor: scheme.primaryContainer,
+                  child: Icon(
+                    iconForCategory(place.category),
+                    color: scheme.onPrimaryContainer,
+                  ),
+                )
+              else
+                CircleAvatar(
+                  backgroundColor: scheme.primary,
+                  child: Text(
+                    '$number',
+                    semanticsLabel: 'Punto $number del mapa',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: scheme.onPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
-              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -90,17 +125,4 @@ class PlaceCard extends StatelessWidget {
       ),
     );
   }
-
-  static IconData _iconFor(PlaceCategory category) => switch (category) {
-    PlaceCategory.restaurant || PlaceCategory.fastFood => Icons.restaurant,
-    PlaceCategory.cafe => Icons.local_cafe_outlined,
-    PlaceCategory.bar => Icons.local_bar_outlined,
-    PlaceCategory.pharmacy => Icons.local_pharmacy_outlined,
-    PlaceCategory.hospital => Icons.local_hospital_outlined,
-    PlaceCategory.bank || PlaceCategory.atm => Icons.account_balance_outlined,
-    PlaceCategory.fuel => Icons.local_gas_station_outlined,
-    PlaceCategory.supermarket => Icons.local_grocery_store_outlined,
-    PlaceCategory.park => Icons.park_outlined,
-    PlaceCategory.hotel => Icons.hotel_outlined,
-  };
 }

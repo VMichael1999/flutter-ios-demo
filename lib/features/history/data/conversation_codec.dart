@@ -48,6 +48,8 @@ Map<String, Object?> _messageToJson(ChatMessage message) => {
   'role': message.role.name,
   'text': message.text,
   if (message.hasImage) 'hadImage': true,
+  if (message.searchCenter case final center?)
+    'center': {'lat': center.latitude, 'lon': center.longitude},
   if (message.places.isNotEmpty)
     'places': [for (final place in message.places) _placeToJson(place)],
 };
@@ -57,6 +59,7 @@ ChatMessage _messageFromJson(Map<String, Object?> json) => ChatMessage(
   role: ChatRole.values.asNameMap()[json['role']] ?? ChatRole.assistant,
   text: json['text'] as String? ?? '',
   hadImage: json['hadImage'] == true,
+  searchCenter: _pointFromJson(json['center']),
   places: [
     for (final place in json['places'] as List? ?? const [])
       if (_placeFromJson(_asMap(place)) case final parsed?) parsed,
@@ -87,6 +90,13 @@ Place? _placeFromJson(Map<String, Object?> json) {
     distanceMeters: (json['distance']! as num).toDouble(),
     address: json['address'] as String?,
   );
+}
+
+GeoPoint? _pointFromJson(Object? value) {
+  if (value is! Map) return null;
+  final (latitude, longitude) = (value['lat'], value['lon']);
+  if (latitude is! num || longitude is! num) return null;
+  return GeoPoint(latitude.toDouble(), longitude.toDouble());
 }
 
 ConversationSource _sourceFrom(Object? name) =>

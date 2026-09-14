@@ -100,7 +100,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             AiTextChunk(:final text) => message.copyWith(
               text: message.text + text,
             ),
-            AiPlacesChunk(:final places) => message.copyWith(places: places),
+            AiPlacesChunk(:final places, :final center) => message.copyWith(
+              places: places,
+              searchCenter: center,
+            ),
           },
         ),
       ),
