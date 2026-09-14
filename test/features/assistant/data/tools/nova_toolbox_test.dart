@@ -26,25 +26,24 @@ void main() {
       () => searchNearbyPlaces(
         category: any(named: 'category'),
         radiusMeters: any(named: 'radiusMeters'),
+        name: any(named: 'name'),
       ),
     ).thenAnswer((_) => answer());
   }
 
-  test('declara la función buscarLugaresCercanos con radio opcional', () {
-    final declaration = toolbox.searchNearbyPlaces;
+  const twoPlaces = NearbyPlacesResult(
+    center: testCenter,
+    radiusMeters: 5000,
+    places: [chifaPlace, bodegaPlace],
+  );
 
-    expect(declaration.name, NovaToolbox.searchNearbyPlacesName);
+  test('declara la función buscarLugaresCercanos', () {
+    expect(toolbox.searchNearbyPlaces.name, NovaToolbox.searchNearbyPlacesName);
     expect(toolbox.tools, hasLength(1));
   });
 
   test('devuelve a Gemini los lugares más cercanos con su distancia', () async {
-    stubSearch(
-      () async => const NearbyPlacesResult(
-        center: testCenter,
-        radiusMeters: 5000,
-        places: [chifaPlace, bodegaPlace],
-      ),
-    );
+    stubSearch(() async => twoPlaces);
 
     final result = await toolbox.handleSearchNearbyPlaces({
       'categoria': 'restaurant',
@@ -52,6 +51,7 @@ void main() {
 
     expect(result['cantidad'], 2);
     expect(result['radioMetros'], 5000);
+    expect(result.containsKey('nombreBuscado'), isFalse);
     expect(result['lugares'], [
       {
         'nombre': 'Chifa Miraflores',
@@ -64,12 +64,12 @@ void main() {
       () => searchNearbyPlaces(
         category: PlaceCategory.restaurant,
         radiusMeters: 5000,
+        name: null,
       ),
     ).called(1);
   });
 
-  test('guarda los lugares para la interfaz y los entrega una sola vez',
-      () async {
+  test('busca un local por el nombre leído en una foto', () async {
     stubSearch(
       () async => const NearbyPlacesResult(
         center: testCenter,
@@ -78,17 +78,37 @@ void main() {
       ),
     );
 
+    final result = await toolbox.handleSearchNearbyPlaces({
+      'categoria': 'restaurant',
+      'nombre': '  Chifa Miraflores ',
+    });
+
+    expect(result['nombreBuscado'], 'Chifa Miraflores');
+    verify(
+      () => searchNearbyPlaces(
+        category: PlaceCategory.restaurant,
+        radiusMeters: 5000,
+        name: 'Chifa Miraflores',
+      ),
+    ).called(1);
+  });
+
+  test('guarda los lugares para la interfaz y los entrega una sola vez',
+      () async {
+    stubSearch(() async => twoPlaces);
+
     await toolbox.handleSearchNearbyPlaces({
       'categoria': 'restaurant',
       'radioMetros': 2000,
     });
 
-    expect(toolbox.takeFoundPlaces(), [chifaPlace]);
+    expect(toolbox.takeFoundPlaces(), [chifaPlace, bodegaPlace]);
     expect(toolbox.takeFoundPlaces(), isNull);
     verify(
       () => searchNearbyPlaces(
         category: PlaceCategory.restaurant,
         radiusMeters: 2000,
+        name: null,
       ),
     ).called(1);
   });
@@ -104,6 +124,7 @@ void main() {
       () => searchNearbyPlaces(
         category: any(named: 'category'),
         radiusMeters: any(named: 'radiusMeters'),
+        name: any(named: 'name'),
       ),
     );
   });

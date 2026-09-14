@@ -2,19 +2,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../data/services/media_picker_service.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../bloc/chat_bloc.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/message_bubble.dart';
 
+/// Cómo abrir el chat: con un mensaje inicial o directamente con la cámara.
+class ChatLaunchOptions {
+  const ChatLaunchOptions({this.prompt, this.imageSource});
+
+  final String? prompt;
+  final MediaSource? imageSource;
+}
+
 class ChatPage extends StatefulWidget {
   const ChatPage({
     super.key,
+    required this.mediaPicker,
     this.initialPrompt,
+    this.initialImageSource,
     this.aiMode = AiMode.firebase,
   });
 
+  final MediaPickerService mediaPicker;
+
   /// Mensaje que se envía automáticamente al abrir el chat.
   final String? initialPrompt;
+
+  /// Abre la cámara o la galería al entrar.
+  final MediaSource? initialImageSource;
   final AiMode aiMode;
 
   @override
@@ -24,6 +41,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+  ChatAttachment? _attachment;
 
   @override
   void initState() {
@@ -31,6 +49,9 @@ class _ChatPageState extends State<ChatPage> {
     final prompt = widget.initialPrompt?.trim();
     if (prompt != null && prompt.isNotEmpty) {
       context.read<ChatBloc>().add(ChatMessageSent(prompt));
+    }
+    if (widget.initialImageSource case final source?) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _pickImage(source));
     }
   }
 
@@ -41,11 +62,65 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  void _send([String? text]) {
-    final message = text ?? _textController.text;
-    if (message.trim().isEmpty) return;
-    context.read<ChatBloc>().add(ChatMessageSent(message));
-    if (text == null) _textController.clear();
+  Future<void> _chooseImageSource() async {
+    final source = await showModalBottomSheet<MediaSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Tomar foto'),
+              onTap: () => Navigator.pop(context, MediaSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de la galería'),
+              onTap: () => Navigator.pop(context, MediaSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source != null) await _pickImage(source);
+  }
+
+  Future<void> _pickImage(MediaSource source) async {
+    try {
+      final attachment = await widget.mediaPicker.pickImage(source);
+      if (attachment != null && mounted) {
+        setState(() => _attachment = attachment);
+      }
+    } catch (error) {
+      debugPrint('No se pudo obtener la imagen: $error');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            source == MediaSource.camera
+                ? 'No se pudo abrir la cámara.'
+                : 'No se pudo abrir la galería.',
+          ),
+        ),
+      );
+    }
+  }
+
+  void _send([String? suggestion]) {
+    final bloc = context.read<ChatBloc>();
+    if (bloc.state.isStreaming) return;
+
+    final text = suggestion ?? _textController.text;
+    final attachment = suggestion == null ? _attachment : null;
+    if (text.trim().isEmpty && attachment == null) return;
+
+    bloc.add(ChatMessageSent(text, attachment: attachment));
+    if (suggestion == null) {
+      _textController.clear();
+      setState(() => _attachment = null);
+    }
   }
 
   void _scrollToBottom() {
@@ -106,10 +181,13 @@ class _ChatPageState extends State<ChatPage> {
               builder: (context, isStreaming) => ChatInput(
                 controller: _textController,
                 isStreaming: isStreaming,
+                attachment: _attachment,
                 onSend: _send,
                 onStop: () => context
                     .read<ChatBloc>()
                     .add(const ChatGenerationStopped()),
+                onAttach: _chooseImageSource,
+                onRemoveAttachment: () => setState(() => _attachment = null),
               ),
             ),
           ],
@@ -124,8 +202,8 @@ class _EmptyChat extends StatelessWidget {
 
   static const _suggestions = [
     '¿Qué puedes hacer?',
+    'Busca restaurantes cerca de mí',
     'Ayúdame a organizar mi semana',
-    'Explícame qué es Flutter',
   ];
 
   final ValueChanged<String> onSuggestionTap;
@@ -150,6 +228,14 @@ class _EmptyChat extends StatelessWidget {
               'Pregúntame lo que quieras',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'También puedes enviarme una foto con el botón de imagen.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),

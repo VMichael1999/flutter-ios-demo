@@ -7,14 +7,15 @@ sealed class ChatEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// El usuario envía un mensaje.
+/// El usuario envía un mensaje, opcionalmente con una imagen.
 final class ChatMessageSent extends ChatEvent {
-  const ChatMessageSent(this.text);
+  const ChatMessageSent(this.text, {this.attachment});
 
   final String text;
+  final ChatAttachment? attachment;
 
   @override
-  List<Object?> get props => [text];
+  List<Object?> get props => [text, attachment];
 }
 
 /// El usuario detiene la respuesta en curso.

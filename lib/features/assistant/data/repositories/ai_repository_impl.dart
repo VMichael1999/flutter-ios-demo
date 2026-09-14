@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../datasources/ai_remote_datasource.dart';
 
@@ -11,11 +12,15 @@ class AiRepositoryImpl implements AiRepository {
   final AiRemoteDataSource _dataSource;
 
   @override
-  Stream<AiReplyChunk> streamReply(String message) async* {
+  Stream<AiReplyChunk> streamReply(
+    String message, {
+    ChatAttachment? attachment,
+  }) async* {
     // `await for` en lugar de `yield*`: con `yield*` los errores del stream
     // interno se reenvían tal cual y este `try` no llega a traducirlos.
     try {
-      await for (final chunk in _dataSource.streamReply(message)) {
+      await for (final chunk
+          in _dataSource.streamReply(message, attachment: attachment)) {
         yield chunk;
       }
     } on AiFailure {

@@ -4,6 +4,7 @@ import 'package:nova_ai/core/config/app_config.dart';
 import 'package:nova_ai/core/errors/failures.dart';
 import 'package:nova_ai/core/services/location_service.dart';
 import 'package:nova_ai/core/utils/geo.dart';
+import 'package:nova_ai/features/places/domain/entities/place.dart';
 import 'package:nova_ai/features/places/domain/entities/place_category.dart';
 import 'package:nova_ai/features/places/domain/repositories/places_repository.dart';
 import 'package:nova_ai/features/places/domain/usecases/search_nearby_places.dart';
@@ -24,6 +25,14 @@ void main() {
     registerFallbackValue(PlaceCategory.restaurant);
   });
 
+  Future<List<Place>> Function() anySearch() => () => repository.searchNearby(
+        center: any(named: 'center'),
+        category: any(named: 'category'),
+        radiusMeters: any(named: 'radiusMeters'),
+        limit: any(named: 'limit'),
+        name: any(named: 'name'),
+      );
+
   setUp(() {
     locationService = _MockLocationService();
     repository = _MockPlacesRepository();
@@ -33,14 +42,7 @@ void main() {
     );
     when(() => locationService.getCurrentLocation())
         .thenAnswer((_) async => testCenter);
-    when(
-      () => repository.searchNearby(
-        center: any(named: 'center'),
-        category: any(named: 'category'),
-        radiusMeters: any(named: 'radiusMeters'),
-        limit: any(named: 'limit'),
-      ),
-    ).thenAnswer((_) async => [chifaPlace, bodegaPlace]);
+    when(anySearch()).thenAnswer((_) async => [chifaPlace, bodegaPlace]);
   });
 
   test('busca en un radio de 5 km alrededor de la ubicación actual', () async {
@@ -55,6 +57,24 @@ void main() {
         category: PlaceCategory.restaurant,
         radiusMeters: 5000,
         limit: AppConfig.nearbyResultLimit,
+        name: null,
+      ),
+    ).called(1);
+  });
+
+  test('pasa el nombre del local al repositorio', () async {
+    await searchNearbyPlaces(
+      category: PlaceCategory.cafe,
+      name: 'Café Tostado',
+    );
+
+    verify(
+      () => repository.searchNearby(
+        center: testCenter,
+        category: PlaceCategory.cafe,
+        radiusMeters: 5000,
+        limit: AppConfig.nearbyResultLimit,
+        name: 'Café Tostado',
       ),
     ).called(1);
   });
@@ -80,13 +100,6 @@ void main() {
       searchNearbyPlaces(category: PlaceCategory.restaurant),
       throwsA(isA<LocationFailure>()),
     );
-    verifyNever(
-      () => repository.searchNearby(
-        center: any(named: 'center'),
-        category: any(named: 'category'),
-        radiusMeters: any(named: 'radiusMeters'),
-        limit: any(named: 'limit'),
-      ),
-    );
+    verifyNever(anySearch());
   });
 }

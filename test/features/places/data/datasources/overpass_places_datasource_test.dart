@@ -60,6 +60,29 @@ void main() {
     expect(query, contains('[out:json]'));
   });
 
+  test('filtra por el nombre del local sin permitir inyecciones', () {
+    final query = OverpassPlacesDataSource.buildQuery(
+      center: testCenter,
+      category: PlaceCategory.restaurant,
+      radiusMeters: 5000,
+      name: 'Café "Tostado"; out;',
+    );
+
+    expect(query, contains('["name"~"Café Tostado out",i]'));
+    expect(
+      OverpassPlacesDataSource.sanitizePlaceName('  ~~~  '),
+      isNull,
+    );
+    expect(
+      OverpassPlacesDataSource.buildQuery(
+        center: testCenter,
+        category: PlaceCategory.restaurant,
+        radiusMeters: 5000,
+      ),
+      isNot(contains('"name"')),
+    );
+  });
+
   test('devuelve solo los lugares con nombre y coordenadas', () async {
     final client = MockClient((_) async => jsonResponse(overpassBody));
     final dataSource = OverpassPlacesDataSource(client, endpoints: [primary]);

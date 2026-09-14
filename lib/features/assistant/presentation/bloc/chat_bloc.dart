@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/usecases/reset_conversation.dart';
 import '../../domain/usecases/send_message.dart';
@@ -38,20 +40,23 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   void _onMessageSent(ChatMessageSent event, Emitter<ChatState> emit) {
     final text = event.text.trim();
-    if (text.isEmpty || state.isStreaming) return;
+    final attachment = event.attachment;
+    if ((text.isEmpty && attachment == null) || state.isStreaming) return;
 
     emit(
       state.copyWith(
         messages: [
           ...state.messages,
-          ChatMessage.user(id: _nextId(), text: text),
+          ChatMessage.user(id: _nextId(), text: text, attachment: attachment),
           ChatMessage.assistant(id: _nextId(), isStreaming: true),
         ],
         status: ChatStatus.streaming,
       ),
     );
 
-    _replySubscription = _sendMessage(text).listen(
+    // Una foto sin texto también es una pregunta válida.
+    final prompt = text.isEmpty ? AppConfig.defaultImagePrompt : text;
+    _replySubscription = _sendMessage(prompt, attachment: attachment).listen(
       (chunk) => add(_ChatChunkReceived(chunk)),
       onError: (Object error) => add(
         _ChatReplyFailed(

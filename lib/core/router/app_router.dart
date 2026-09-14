@@ -28,13 +28,22 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: AppRoutes.chat,
-        builder: (context, state) => BlocProvider(
-          create: (_) => getIt<ChatBloc>(),
-          child: ChatPage(
-            initialPrompt: state.extra as String?,
-            aiMode: getIt<AiMode>(),
-          ),
-        ),
+        builder: (context, state) {
+          final options = switch (state.extra) {
+            final ChatLaunchOptions options => options,
+            final String prompt => ChatLaunchOptions(prompt: prompt),
+            _ => const ChatLaunchOptions(),
+          };
+          return BlocProvider(
+            create: (_) => getIt<ChatBloc>(),
+            child: ChatPage(
+              mediaPicker: getIt(),
+              initialPrompt: options.prompt,
+              initialImageSource: options.imageSource,
+              aiMode: getIt<AiMode>(),
+            ),
+          );
+        },
       ),
     ],
   );

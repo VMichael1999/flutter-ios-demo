@@ -12,6 +12,10 @@ class PlacesRepositoryImpl implements PlacesRepository {
   /// se busca primero en un radio pequeño y se amplía solo si faltan lugares.
   static const searchStepsMeters = [1000, 2500];
 
+  /// OpenStreetMap a veces registra un local dos veces (como punto y como
+  /// edificio). Dos sucursales con el mismo nombre suelen estar más lejos.
+  static const duplicateVenueMeters = 150;
+
   final PlacesRemoteDataSource _dataSource;
 
   @override
@@ -20,6 +24,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
     required PlaceCategory category,
     required int radiusMeters,
     required int limit,
+    String? name,
   }) async {
     final radii = [
       for (final step in searchStepsMeters)
@@ -33,6 +38,7 @@ class PlacesRepositoryImpl implements PlacesRepository {
         center: center,
         category: category,
         radiusMeters: radius,
+        name: name,
       );
       nearest = _nearest(
         models,
@@ -68,10 +74,6 @@ class PlacesRepositoryImpl implements PlacesRepository {
     }
     return nearest;
   }
-
-  /// OpenStreetMap a veces registra un local dos veces (como punto y como
-  /// edificio). Dos sucursales con el mismo nombre suelen estar más lejos.
-  static const duplicateVenueMeters = 150;
 
   static bool _isSameVenue(Place a, Place b) {
     return a.name.trim().toLowerCase() == b.name.trim().toLowerCase() &&

@@ -2,6 +2,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
+import '../../domain/entities/chat_attachment.dart';
 import '../tools/nova_toolbox.dart';
 import 'ai_remote_datasource.dart';
 
@@ -24,9 +25,19 @@ class FirebaseAiDataSource implements AiRemoteDataSource {
   ChatSession? _chat;
 
   @override
-  Stream<AiReplyChunk> streamReply(String message) async* {
+  Stream<AiReplyChunk> streamReply(
+    String message, {
+    ChatAttachment? attachment,
+  }) async* {
     final chat = _chat ??= _model.startChat();
-    await for (final response in chat.sendMessageStream(Content.text(message))) {
+    final content = attachment == null
+        ? Content.text(message)
+        : Content.multi([
+            InlineDataPart(attachment.mimeType, attachment.bytes),
+            TextPart(message),
+          ]);
+
+    await for (final response in chat.sendMessageStream(content)) {
       // Las funciones se ejecutan entre respuestas del modelo.
       final places = _toolbox.takeFoundPlaces();
       if (places != null) yield AiPlacesChunk(places);

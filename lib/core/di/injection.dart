@@ -5,6 +5,7 @@ import '../../features/assistant/data/datasources/ai_remote_datasource.dart';
 import '../../features/assistant/data/datasources/fake_ai_datasource.dart';
 import '../../features/assistant/data/datasources/firebase_ai_datasource.dart';
 import '../../features/assistant/data/repositories/ai_repository_impl.dart';
+import '../../features/assistant/data/services/media_picker_service.dart';
 import '../../features/assistant/data/tools/nova_toolbox.dart';
 import '../../features/assistant/domain/repositories/ai_repository.dart';
 import '../../features/assistant/domain/usecases/reset_conversation.dart';
@@ -42,6 +43,7 @@ Future<void> configureDependencies({required bool useFirebaseAi}) async {
     ..registerLazySingleton(
       () => SearchNearbyPlaces(locationService: getIt(), repository: getIt()),
     )
+    ..registerLazySingleton<MediaPickerService>(ImagePickerMediaService.new)
     // Cada chat recibe su propia sesión, por eso la cadena se registra como
     // factory: el historial de una conversación no se mezcla con otra.
     ..registerFactory<AiRemoteDataSource>(

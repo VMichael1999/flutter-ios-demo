@@ -5,8 +5,9 @@
     <!-- Ubicación para "lugares cerca de mí". -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!-- Cámara para el análisis de imágenes. -->
-    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Cámara: image_picker usa la app de cámara del sistema, que no necesita
+         el permiso CAMERA. Si se declarara sin pedirlo en tiempo de ejecución,
+         Android bloquearía la cámara con un SecurityException. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <!-- Micrófono para el asistente por voz. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />

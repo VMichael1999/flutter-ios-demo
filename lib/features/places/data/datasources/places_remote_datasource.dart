@@ -12,10 +12,12 @@ import '../models/place_model.dart';
 
 abstract interface class PlacesRemoteDataSource {
   /// Lugares de [category] a menos de [radiusMeters] de [center], sin orden.
+  /// Si se indica [name], solo los que contienen ese nombre.
   Future<List<PlaceModel>> fetchNearby({
     required GeoPoint center,
     required PlaceCategory category,
     required int radiusMeters,
+    String? name,
   });
 }
 
@@ -41,11 +43,13 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
     required GeoPoint center,
     required PlaceCategory category,
     required int radiusMeters,
+    String? name,
   }) async {
     final query = buildQuery(
       center: center,
       category: category,
       radiusMeters: radiusMeters,
+      name: name,
     );
 
     Object? lastError;
@@ -96,10 +100,27 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
     required GeoPoint center,
     required PlaceCategory category,
     required int radiusMeters,
+    String? name,
   }) {
+    final nameFilter = switch (sanitizePlaceName(name)) {
+      final String pattern => '["name"~"$pattern",i]',
+      null => '',
+    };
     return '[out:json][timeout:15];'
-        'nwr["${category.osmKey}"="${category.osmValue}"]'
+        'nwr["${category.osmKey}"="${category.osmValue}"]$nameFilter'
         '(around:$radiusMeters,${center.latitude},${center.longitude});'
         'out center $maxElements;';
+  }
+
+  /// Deja solo letras, números y espacios: el nombre (leído, por ejemplo, de
+  /// un letrero en una foto) se usa como patrón de búsqueda sin inyecciones.
+  @visibleForTesting
+  static String? sanitizePlaceName(String? name) {
+    if (name == null) return null;
+    final cleaned = name
+        .replaceAll(RegExp(r'[^\p{L}\p{N} ]', unicode: true), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return cleaned.isEmpty ? null : cleaned;
   }
 }

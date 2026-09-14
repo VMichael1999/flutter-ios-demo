@@ -20,7 +20,9 @@ class NovaToolbox {
       AutoFunctionDeclaration(
     name: searchNearbyPlacesName,
     description: 'Busca lugares cerca de la ubicación actual del usuario y '
-        'devuelve los más cercanos con su distancia en metros.',
+        'devuelve los más cercanos con su distancia en metros. También sirve '
+        'para ubicar un local concreto por su nombre, por ejemplo el que se '
+        'lee en el letrero de una foto.',
     parameters: {
       'categoria': Schema.enumString(
         enumValues: [for (final category in PlaceCategory.values) category.name],
@@ -32,8 +34,12 @@ class NovaToolbox {
         minimum: SearchNearbyPlaces.minRadiusMeters,
         maximum: AppConfig.nearbyRadiusMeters,
       ),
+      'nombre': Schema.string(
+        description: 'Nombre del local, si el usuario lo menciona o se lee en '
+            'una imagen.',
+      ),
     },
-    optionalParameters: const ['radioMetros'],
+    optionalParameters: const ['radioMetros', 'nombre'],
     callable: handleSearchNearbyPlaces,
   );
 
@@ -68,15 +74,21 @@ class NovaToolbox {
       final num value => value.toInt(),
       _ => AppConfig.nearbyRadiusMeters,
     };
+    final name = switch (args['nombre']) {
+      final String value when value.trim().isNotEmpty => value.trim(),
+      _ => null,
+    };
 
     try {
       final result = await _searchNearbyPlaces(
         category: category,
         radiusMeters: radiusMeters,
+        name: name,
       );
       _foundPlaces = result.places;
       return {
         'categoria': category.label,
+        if (name != null) 'nombreBuscado': name,
         'radioMetros': result.radiusMeters,
         'cantidad': result.places.length,
         'lugares': [

@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nova_ai/core/config/app_config.dart';
 import 'package:nova_ai/core/errors/failures.dart';
 import 'package:nova_ai/features/assistant/domain/entities/ai_reply_chunk.dart';
 import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
@@ -16,6 +17,8 @@ class _MockAiRepository extends Mock implements AiRepository {}
 void main() {
   late _MockAiRepository repository;
 
+  setUpAll(() => registerFallbackValue(testImageAttachment));
+
   setUp(() => repository = _MockAiRepository());
 
   ChatBloc buildBloc() => ChatBloc(
@@ -23,10 +26,20 @@ void main() {
         resetConversation: ResetConversation(repository),
       );
 
+  void stubReply(String message, Stream<AiReplyChunk> Function() reply) {
+    when(
+      () => repository.streamReply(
+        message,
+        attachment: any(named: 'attachment'),
+      ),
+    ).thenAnswer((_) => reply());
+  }
+
   blocTest<ChatBloc, ChatState>(
     'muestra la respuesta del asistente fragmento a fragmento',
-    setUp: () => when(() => repository.streamReply('Hola')).thenAnswer(
-      (_) => Stream.fromIterable(
+    setUp: () => stubReply(
+      'Hola',
+      () => Stream.fromIterable(
         const [AiTextChunk('Hola, '), AiTextChunk('soy NOVA')],
       ),
     ),
@@ -49,9 +62,9 @@ void main() {
 
   blocTest<ChatBloc, ChatState>(
     'adjunta los lugares encontrados a la respuesta del asistente',
-    setUp: () => when(() => repository.streamReply('Restaurantes cerca'))
-        .thenAnswer(
-      (_) => Stream.fromIterable(const [
+    setUp: () => stubReply(
+      'Restaurantes cerca',
+      () => Stream.fromIterable(const [
         AiPlacesChunk([chifaPlace, bodegaPlace]),
         AiTextChunk('El más cercano es Chifa Miraflores.'),
       ]),
@@ -78,17 +91,52 @@ void main() {
   );
 
   blocTest<ChatBloc, ChatState>(
-    'ignora mensajes vacíos',
+    'envía la foto con una pregunta por defecto si no hay texto',
+    setUp: () => stubReply(
+      AppConfig.defaultImagePrompt,
+      () => Stream.value(const AiTextChunk('Es el letrero de un restaurante.')),
+    ),
+    build: buildBloc,
+    act: (bloc) =>
+        bloc.add(ChatMessageSent('  ', attachment: testImageAttachment)),
+    wait: const Duration(milliseconds: 10),
+    expect: () => [
+      isA<ChatState>()
+          .having((s) => s.messages.first.attachment, 'foto', testImageAttachment)
+          .having((s) => s.messages.first.text, 'texto del usuario', ''),
+      isA<ChatState>().having(
+        (s) => s.messages.last.text,
+        'respuesta',
+        'Es el letrero de un restaurante.',
+      ),
+      isA<ChatState>().having((s) => s.status, 'status', ChatStatus.idle),
+    ],
+    verify: (_) => verify(
+      () => repository.streamReply(
+        AppConfig.defaultImagePrompt,
+        attachment: testImageAttachment,
+      ),
+    ).called(1),
+  );
+
+  blocTest<ChatBloc, ChatState>(
+    'ignora mensajes vacíos sin imagen',
     build: buildBloc,
     act: (bloc) => bloc.add(const ChatMessageSent('   ')),
     expect: () => <ChatState>[],
-    verify: (_) => verifyNever(() => repository.streamReply(any())),
+    verify: (_) => verifyNever(
+      () => repository.streamReply(
+        any(),
+        attachment: any(named: 'attachment'),
+      ),
+    ),
   );
 
   blocTest<ChatBloc, ChatState>(
     'muestra el error y quita la burbuja vacía cuando la IA falla',
-    setUp: () => when(() => repository.streamReply('Hola')).thenAnswer(
-      (_) => Stream.error(const AiFailure('Sin conexión')),
+    setUp: () => stubReply(
+      'Hola',
+      () => Stream.error(const AiFailure('Sin conexión')),
     ),
     build: buildBloc,
     act: (bloc) => bloc.add(const ChatMessageSent('Hola')),

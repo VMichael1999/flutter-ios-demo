@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/router/app_routes.dart';
+import '../../../assistant/data/services/media_picker_service.dart';
+import '../../../assistant/presentation/pages/chat_page.dart';
 import '../../../../shared/widgets/nova_logo.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,7 +16,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   static const _quickActions = [
-    _QuickAction(icon: Icons.photo_camera_outlined, label: 'Cámara'),
+    _QuickAction(
+      icon: Icons.photo_camera_outlined,
+      label: 'Cámara',
+      imageSource: MediaSource.camera,
+    ),
     _QuickAction(icon: Icons.mic_none_rounded, label: 'Voz'),
     _QuickAction(icon: Icons.description_outlined, label: 'Documento'),
     _QuickAction(
@@ -40,6 +46,19 @@ class _HomePageState extends State<HomePage> {
   void _submitPrompt() {
     final prompt = _promptController.text.trim();
     if (prompt.isNotEmpty) _openChat(prompt);
+  }
+
+  void _onQuickAction(_QuickAction action) {
+    if (action.imageSource case final source?) {
+      context.push(
+        AppRoutes.chat,
+        extra: ChatLaunchOptions(imageSource: source),
+      );
+    } else if (action.prompt case final prompt?) {
+      _openChat(prompt);
+    } else {
+      _showComingSoon(action.label);
+    }
   }
 
   void _showComingSoon(String feature) {
@@ -119,9 +138,7 @@ class _HomePageState extends State<HomePage> {
                 for (final action in _quickActions)
                   _QuickActionCard(
                     action: action,
-                    onTap: () => action.prompt == null
-                        ? _showComingSoon(action.label)
-                        : _openChat(action.prompt),
+                    onTap: () => _onQuickAction(action),
                   ),
               ],
             ),
@@ -139,13 +156,21 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _QuickAction {
-  const _QuickAction({required this.icon, required this.label, this.prompt});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    this.prompt,
+    this.imageSource,
+  });
 
   final IconData icon;
   final String label;
 
-  /// Mensaje que se envía a NOVA; `null` si la función aún no existe.
+  /// Mensaje que se envía a NOVA.
   final String? prompt;
+
+  /// Abre el chat con la cámara o la galería.
+  final MediaSource? imageSource;
 }
 
 class _QuickActionCard extends StatelessWidget {

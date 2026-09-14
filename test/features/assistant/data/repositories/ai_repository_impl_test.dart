@@ -13,14 +13,25 @@ void main() {
   late _MockAiRemoteDataSource dataSource;
   late AiRepositoryImpl repository;
 
+  setUpAll(() => registerFallbackValue(testImageAttachment));
+
   setUp(() {
     dataSource = _MockAiRemoteDataSource();
     repository = AiRepositoryImpl(dataSource);
   });
 
+  void stubReply(Stream<AiReplyChunk> Function() reply) {
+    when(
+      () => dataSource.streamReply(
+        any(),
+        attachment: any(named: 'attachment'),
+      ),
+    ).thenAnswer((_) => reply());
+  }
+
   test('reenvía texto y lugares en orden', () {
-    when(() => dataSource.streamReply('Hola')).thenAnswer(
-      (_) => Stream.fromIterable(const [
+    stubReply(
+      () => Stream.fromIterable(const [
         AiPlacesChunk([chifaPlace]),
         AiTextChunk('Hola, '),
         AiTextChunk('soy NOVA'),
@@ -38,9 +49,23 @@ void main() {
     );
   });
 
+  test('envía la imagen adjunta al datasource', () async {
+    stubReply(() => Stream.value(const AiTextChunk('Un restaurante.')));
+
+    await repository
+        .streamReply('¿Qué es?', attachment: testImageAttachment)
+        .drain<void>();
+
+    verify(
+      () => dataSource.streamReply(
+        '¿Qué es?',
+        attachment: testImageAttachment,
+      ),
+    ).called(1);
+  });
+
   test('convierte los errores del datasource en AiFailure', () {
-    when(() => dataSource.streamReply('Hola'))
-        .thenAnswer((_) => Stream.error(Exception('Sin red')));
+    stubReply(() => Stream.error(Exception('Sin red')));
 
     expect(
       repository.streamReply('Hola'),
@@ -53,8 +78,8 @@ void main() {
   });
 
   test('explica los errores de acceso como problema de configuración', () {
-    when(() => dataSource.streamReply('Hola')).thenAnswer(
-      (_) => Stream.error(Exception('Firebase App Check token is invalid.')),
+    stubReply(
+      () => Stream.error(Exception('Firebase App Check token is invalid.')),
     );
 
     expect(
@@ -68,8 +93,7 @@ void main() {
 
   test('mantiene los AiFailure sin envolverlos otra vez', () {
     const failure = AiFailure('Sin conexión');
-    when(() => dataSource.streamReply('Hola'))
-        .thenAnswer((_) => Stream.error(failure));
+    stubReply(() => Stream.error(failure));
 
     expect(repository.streamReply('Hola'), emitsError(same(failure)));
   });

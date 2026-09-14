@@ -36,6 +36,15 @@ void main() {
     expect(find.byTooltip('Cómo llegar'), findsNWidgets(2));
   });
 
+  testWidgets('muestra la foto que envió el usuario', (tester) async {
+    await pumpBubble(
+      tester,
+      ChatMessage.user(id: '1', text: '', attachment: testImageAttachment),
+    );
+
+    expect(find.bySemanticsLabel('Imagen enviada'), findsOneWidget);
+  });
+
   testWidgets('muestra el indicador de escritura mientras llega la respuesta',
       (tester) async {
     await pumpBubble(

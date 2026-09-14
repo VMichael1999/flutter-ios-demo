@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../places/domain/entities/place.dart';
+import 'chat_attachment.dart';
 
 enum ChatRole { user, assistant }
 
@@ -11,10 +12,14 @@ class ChatMessage extends Equatable {
     required this.text,
     this.isStreaming = false,
     this.places = const [],
+    this.attachment,
   });
 
-  const ChatMessage.user({required String id, required String text})
-      : this(id: id, role: ChatRole.user, text: text);
+  const ChatMessage.user({
+    required String id,
+    required String text,
+    ChatAttachment? attachment,
+  }) : this(id: id, role: ChatRole.user, text: text, attachment: attachment);
 
   const ChatMessage.assistant({
     required String id,
@@ -39,6 +44,9 @@ class ChatMessage extends Equatable {
   /// Lugares encontrados por NOVA para esta respuesta.
   final List<Place> places;
 
+  /// Imagen que el usuario envió con el mensaje.
+  final ChatAttachment? attachment;
+
   bool get isUser => role == ChatRole.user;
 
   bool get isAssistant => role == ChatRole.assistant;
@@ -54,9 +62,10 @@ class ChatMessage extends Equatable {
       text: text ?? this.text,
       isStreaming: isStreaming ?? this.isStreaming,
       places: places ?? this.places,
+      attachment: attachment,
     );
   }
 
   @override
-  List<Object?> get props => [id, role, text, isStreaming, places];
+  List<Object?> get props => [id, role, text, isStreaming, places, attachment];
 }

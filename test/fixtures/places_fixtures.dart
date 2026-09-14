@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:nova_ai/core/utils/geo.dart';
+import 'package:nova_ai/features/assistant/domain/entities/chat_attachment.dart';
 import 'package:nova_ai/features/places/domain/entities/place.dart';
 import 'package:nova_ai/features/places/domain/entities/place_category.dart';
 
@@ -20,4 +23,13 @@ const bodegaPlace = Place(
   category: PlaceCategory.restaurant,
   location: GeoPoint(-12.1324, -77.0266),
   distanceMeters: 1250,
+);
+
+/// PNG válido de 1x1 píxel, para widgets que decodifican la imagen.
+final testImageAttachment = ChatAttachment(
+  bytes: base64Decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+  ),
+  mimeType: 'image/png',
+  name: 'letrero.png',
 );

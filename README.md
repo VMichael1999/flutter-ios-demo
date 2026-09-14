@@ -20,6 +20,22 @@ voz, documentos y la ubicación para ejecutar acciones reales en el dispositivo.
 - [x] Lugares cercanos desde el chat (function calling + GPS + OpenStreetMap)
 - [x] Permisos nativos: Internet, ubicación, cámara, micrófono y notificaciones
 
+## Fotos e imágenes
+
+En el chat, el botón de imagen permite **tomar una foto** o **elegirla de la
+galería** (también desde el acceso rápido **Cámara** de la home). La imagen se
+envía a Gemini junto con tu pregunta; si no escribes nada, NOVA pregunta
+*"¿Qué hay en esta imagen?"*.
+
+- **Local en una foto**: Gemini lee el nombre del letrero y llama a
+  `buscarLugaresCercanos` con ese nombre para ubicarlo a menos de 5 km y
+  ofrecer **Cómo llegar**.
+- **Facturas y recibos**: extrae monto, moneda, fechas y concepto, e indica si
+  algún dato no se lee.
+- Las fotos se reducen a 1600 px (calidad 85) antes de enviarse.
+- En Android no se declara el permiso `CAMERA`: `image_picker` usa la app de
+  cámara del sistema, y declararlo sin pedirlo haría fallar la cámara.
+
 ## Lugares cerca de mí
 
 Si escribes en el chat algo como *"Busca restaurantes cerca de mí"*, Gemini

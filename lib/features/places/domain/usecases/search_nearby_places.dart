@@ -17,10 +17,13 @@ class SearchNearbyPlaces {
   final LocationService _locationService;
   final PlacesRepository _repository;
 
+  /// Con [name] busca un local concreto, por ejemplo el que aparece en una
+  /// foto.
   Future<NearbyPlacesResult> call({
     required PlaceCategory category,
     int radiusMeters = AppConfig.nearbyRadiusMeters,
     int limit = AppConfig.nearbyResultLimit,
+    String? name,
   }) async {
     final center = await _locationService.getCurrentLocation();
     final radius =
@@ -30,6 +33,7 @@ class SearchNearbyPlaces {
       category: category,
       radiusMeters: radius,
       limit: limit,
+      name: name,
     );
     return NearbyPlacesResult(
       center: center,

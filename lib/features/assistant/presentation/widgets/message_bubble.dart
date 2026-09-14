@@ -27,6 +27,21 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment:
               isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
+            if (message.attachment case final attachment?
+                when attachment.isImage)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Image.memory(
+                    attachment.bytes,
+                    width: 220,
+                    fit: BoxFit.cover,
+                    gaplessPlayback: true,
+                    semanticLabel: 'Imagen enviada',
+                  ),
+                ),
+              ),
             if (showTyping || text.isNotEmpty)
               Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),

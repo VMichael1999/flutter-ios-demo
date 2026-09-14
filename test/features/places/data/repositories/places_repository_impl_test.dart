@@ -13,35 +13,29 @@ class _FakePlacesDataSource implements PlacesRemoteDataSource {
 
   final Map<int, List<PlaceModel>> byRadius;
   final requestedRadii = <int>[];
+  final requestedNames = <String?>[];
 
   @override
   Future<List<PlaceModel>> fetchNearby({
     required GeoPoint center,
     required PlaceCategory category,
     required int radiusMeters,
+    String? name,
   }) async {
     requestedRadii.add(radiusMeters);
+    requestedNames.add(name);
     return byRadius[radiusMeters] ?? const [];
   }
 }
 
 /// Lugar desplazado hacia el norte del centro de pruebas.
-PlaceModel _placeAt(String id, {required double metersNorth}) => PlaceModel(
+PlaceModel _placeAt(String id, {required double metersNorth, String? name}) =>
+    PlaceModel(
       id: id,
-      name: 'Lugar $id',
+      name: name ?? 'Lugar $id',
       latitude: testCenter.latitude + metersNorth / 111195,
       longitude: testCenter.longitude,
     );
-
-extension on PlaceModel {
-  PlaceModel copyWithName(String name) => PlaceModel(
-        id: id,
-        name: name,
-        latitude: latitude,
-        longitude: longitude,
-        address: address,
-      );
-}
 
 void main() {
   test('ordena del más cercano al más lejano y respeta el límite', () async {
@@ -87,12 +81,27 @@ void main() {
     expect(places.map((p) => p.id), ['cerca', 'lejos']);
   });
 
+  test('pasa el nombre buscado en cada consulta', () async {
+    final dataSource = _FakePlacesDataSource({});
+    final repository = PlacesRepositoryImpl(dataSource);
+
+    await repository.searchNearby(
+      center: testCenter,
+      category: PlaceCategory.restaurant,
+      radiusMeters: 2500,
+      limit: 1,
+      name: 'Chifa',
+    );
+
+    expect(dataSource.requestedNames, ['Chifa', 'Chifa']);
+  });
+
   test('muestra una sola vez el mismo local registrado dos veces', () async {
     final dataSource = _FakePlacesDataSource({
       1000: [
-        _placeAt('nodo', metersNorth: 87).copyWithName('La fuente de Soda'),
-        _placeAt('edificio', metersNorth: 93).copyWithName('La Fuente de Soda'),
-        _placeAt('sucursal', metersNorth: 900).copyWithName('La Fuente de Soda'),
+        _placeAt('nodo', metersNorth: 87, name: 'La fuente de Soda'),
+        _placeAt('edificio', metersNorth: 93, name: 'La Fuente de Soda'),
+        _placeAt('sucursal', metersNorth: 900, name: 'La Fuente de Soda'),
       ],
     });
     final repository = PlacesRepositoryImpl(dataSource);
