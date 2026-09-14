@@ -26,7 +26,8 @@ class _HomePageState extends State<HomePage> {
     _QuickAction(
       icon: Icons.location_on_outlined,
       label: 'Ubicación',
-      prompt: 'Busca restaurantes cerca de mí',
+      // Queda escrito sin enviar: el usuario completa qué quiere buscar.
+      draft: ChatDraft(prefix: 'Busca ', suffix: ' cerca de mí'),
     ),
   ];
 
@@ -54,8 +55,8 @@ class _HomePageState extends State<HomePage> {
         AppRoutes.chat,
         extra: ChatLaunchOptions(imageSource: source),
       );
-    } else if (action.prompt case final prompt?) {
-      _openChat(prompt);
+    } else if (action.draft case final draft?) {
+      context.push(AppRoutes.chat, extra: ChatLaunchOptions(draft: draft));
     } else {
       _showComingSoon(action.label);
     }
@@ -127,13 +128,17 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             const SizedBox(height: 12),
-            GridView.count(
-              crossAxisCount: 2,
+            GridView(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              childAspectRatio: 1.6,
+              // Altura fija: con una proporción ancho/alto las tarjetas se
+              // desbordaban en teléfonos estrechos (360 px) o con letra grande.
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                mainAxisExtent: 100,
+              ),
               children: [
                 for (final action in _quickActions)
                   _QuickActionCard(
@@ -159,15 +164,15 @@ class _QuickAction {
   const _QuickAction({
     required this.icon,
     required this.label,
-    this.prompt,
+    this.draft,
     this.imageSource,
   });
 
   final IconData icon;
   final String label;
 
-  /// Mensaje que se envía a NOVA.
-  final String? prompt;
+  /// Texto que queda escrito en el chat para que el usuario lo complete.
+  final ChatDraft? draft;
 
   /// Abre el chat con la cámara o la galería.
   final MediaSource? imageSource;
@@ -199,6 +204,8 @@ class _QuickActionCard extends StatelessWidget {
               Icon(action.icon, color: theme.colorScheme.primary),
               Text(
                 action.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),

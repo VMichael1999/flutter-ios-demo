@@ -39,6 +39,7 @@ GoRouter createAppRouter() {
             child: ChatPage(
               mediaPicker: getIt(),
               initialPrompt: options.prompt,
+              initialDraft: options.draft,
               initialImageSource: options.imageSource,
               aiMode: getIt<AiMode>(),
             ),

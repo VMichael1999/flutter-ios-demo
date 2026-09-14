@@ -12,9 +12,11 @@ class ChatInput extends StatelessWidget {
     required this.onAttach,
     required this.onRemoveAttachment,
     this.attachment,
+    this.focusNode,
   });
 
   final TextEditingController controller;
+  final FocusNode? focusNode;
   final bool isStreaming;
   final VoidCallback onSend;
   final VoidCallback onStop;
@@ -53,6 +55,7 @@ class ChatInput extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: controller,
+                  focusNode: focusNode,
                   minLines: 1,
                   maxLines: 5,
                   textInputAction: TextInputAction.send,

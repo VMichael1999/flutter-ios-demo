@@ -8,12 +8,27 @@ import '../bloc/chat_bloc.dart';
 import '../widgets/chat_input.dart';
 import '../widgets/message_bubble.dart';
 
-/// Cómo abrir el chat: con un mensaje inicial o directamente con la cámara.
+/// Cómo abrir el chat: con un mensaje inicial, un texto a medio escribir o
+/// directamente con la cámara.
 class ChatLaunchOptions {
-  const ChatLaunchOptions({this.prompt, this.imageSource});
+  const ChatLaunchOptions({this.prompt, this.draft, this.imageSource});
 
   final String? prompt;
+  final ChatDraft? draft;
   final MediaSource? imageSource;
+}
+
+/// Texto que se deja escrito, sin enviar, con el cursor entre [prefix] y
+/// [suffix]. Por ejemplo "Busca | cerca de mí".
+class ChatDraft {
+  const ChatDraft({required this.prefix, this.suffix = ''});
+
+  final String prefix;
+  final String suffix;
+
+  String get text => '$prefix$suffix';
+
+  int get cursorOffset => prefix.length;
 }
 
 class ChatPage extends StatefulWidget {
@@ -21,6 +36,7 @@ class ChatPage extends StatefulWidget {
     super.key,
     required this.mediaPicker,
     this.initialPrompt,
+    this.initialDraft,
     this.initialImageSource,
     this.aiMode = AiMode.firebase,
   });
@@ -29,6 +45,9 @@ class ChatPage extends StatefulWidget {
 
   /// Mensaje que se envía automáticamente al abrir el chat.
   final String? initialPrompt;
+
+  /// Texto que queda escrito para que el usuario lo complete.
+  final ChatDraft? initialDraft;
 
   /// Abre la cámara o la galería al entrar.
   final MediaSource? initialImageSource;
@@ -41,6 +60,7 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   final _textController = TextEditingController();
   final _scrollController = ScrollController();
+  final _inputFocus = FocusNode();
   ChatAttachment? _attachment;
 
   @override
@@ -49,6 +69,15 @@ class _ChatPageState extends State<ChatPage> {
     final prompt = widget.initialPrompt?.trim();
     if (prompt != null && prompt.isNotEmpty) {
       context.read<ChatBloc>().add(ChatMessageSent(prompt));
+    }
+    if (widget.initialDraft case final draft?) {
+      _textController.value = TextEditingValue(
+        text: draft.text,
+        selection: TextSelection.collapsed(offset: draft.cursorOffset),
+      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _inputFocus.requestFocus();
+      });
     }
     if (widget.initialImageSource case final source?) {
       WidgetsBinding.instance.addPostFrameCallback((_) => _pickImage(source));
@@ -59,6 +88,7 @@ class _ChatPageState extends State<ChatPage> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    _inputFocus.dispose();
     super.dispose();
   }
 
@@ -180,6 +210,7 @@ class _ChatPageState extends State<ChatPage> {
               selector: (state) => state.isStreaming,
               builder: (context, isStreaming) => ChatInput(
                 controller: _textController,
+                focusNode: _inputFocus,
                 isStreaming: isStreaming,
                 attachment: _attachment,
                 onSend: _send,
