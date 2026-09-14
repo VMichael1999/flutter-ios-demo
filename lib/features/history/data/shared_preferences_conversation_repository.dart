@@ -19,6 +19,11 @@ class SharedPreferencesConversationRepository
   }) : _preferences = preferences ?? SharedPreferences.getInstance();
 
   static const _indexKey = 'nova.history.index';
+
+  /// El historial se ordena por fecha y no por orden de guardado: al deshacer
+  /// un borrado, la conversación vuelve a su lugar en vez de saltar arriba.
+  static int _newestFirst(ConversationSummary a, ConversationSummary b) =>
+      b.updatedAt.compareTo(a.updatedAt);
   static String _conversationKey(String id) => 'nova.history.conversation.$id';
 
   final Future<SharedPreferences> _preferences;
@@ -76,7 +81,8 @@ class SharedPreferencesConversationRepository
     final index =
         _readIndex(preferences)
           ..removeWhere((summary) => summary.id == saved.id)
-          ..insert(0, saved.summary);
+          ..add(saved.summary)
+          ..sort(_newestFirst);
 
     await preferences.setString(
       _conversationKey(saved.id),
@@ -117,7 +123,7 @@ class SharedPreferencesConversationRepository
       return [
         for (final item in jsonDecode(raw) as List)
           summaryFromJson((item as Map).cast<String, Object?>()),
-      ];
+      ]..sort(_newestFirst);
     } catch (error) {
       debugPrint('Índice del historial dañado, se reinicia: $error');
       return [];

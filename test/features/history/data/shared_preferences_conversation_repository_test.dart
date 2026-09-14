@@ -119,6 +119,21 @@ void main() {
     expect(await repository.load('f'), isNull);
   });
 
+  test('al deshacer un borrado la conversación vuelve a su lugar', () async {
+    final older = conversation('vieja', at: DateTime(2026, 9, 13, 10));
+    await repository.save(older);
+    await repository.save(conversation('nueva', at: DateTime(2026, 9, 13, 11)));
+
+    await repository.delete('vieja');
+    // "Deshacer" vuelve a guardar la misma conversación, con su fecha.
+    await repository.save(older);
+
+    expect(
+      [for (final summary in await repository.recent()) summary.id],
+      ['nueva', 'vieja'],
+    );
+  });
+
   test('un índice dañado no rompe la app', () async {
     SharedPreferences.setMockInitialValues({'nova.history.index': '{roto'});
     repository = SharedPreferencesConversationRepository();
