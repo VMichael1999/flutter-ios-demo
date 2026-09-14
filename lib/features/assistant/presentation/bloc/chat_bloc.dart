@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/usecases/reset_conversation.dart';
 import '../../domain/usecases/send_message.dart';
@@ -29,7 +30,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final SendMessage _sendMessage;
   final ResetConversation _resetConversation;
 
-  StreamSubscription<String>? _replySubscription;
+  StreamSubscription<AiReplyChunk>? _replySubscription;
   int _messageCount = 0;
 
   String _nextId() =>
@@ -67,7 +68,11 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     emit(
       state.copyWith(
         messages: _updateLastAssistant(
-          (message) => message.copyWith(text: message.text + event.chunk),
+          (message) => switch (event.chunk) {
+            AiTextChunk(:final text) =>
+              message.copyWith(text: message.text + text),
+            AiPlacesChunk(:final places) => message.copyWith(places: places),
+          },
         ),
       ),
     );
@@ -92,7 +97,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     // Si la IA falló antes de escribir nada, la burbuja vacía no aporta.
     if (messages.isNotEmpty &&
         messages.last.isAssistant &&
-        messages.last.text.isEmpty) {
+        messages.last.text.isEmpty &&
+        messages.last.places.isEmpty) {
       messages.removeLast();
     }
     emit(

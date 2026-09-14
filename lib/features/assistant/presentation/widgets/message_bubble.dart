@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/chat_message.dart';
+import 'place_card.dart';
 import 'typing_indicator.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -20,28 +21,42 @@ class MessageBubble extends StatelessWidget {
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.sizeOf(context).width * 0.8,
+          maxWidth: MediaQuery.sizeOf(context).width * 0.85,
         ),
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: isUser ? scheme.primary : scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(20),
-              topRight: const Radius.circular(20),
-              bottomLeft: Radius.circular(isUser ? 20 : 4),
-              bottomRight: Radius.circular(isUser ? 4 : 20),
-            ),
-          ),
-          child: showTyping
-              ? const TypingIndicator()
-              : Text(
-                  message.isStreaming ? '$text ▍' : text,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: isUser ? scheme.onPrimary : scheme.onSurface,
+        child: Column(
+          crossAxisAlignment:
+              isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            if (showTyping || text.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color:
+                      isUser ? scheme.primary : scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(20),
+                    topRight: const Radius.circular(20),
+                    bottomLeft: Radius.circular(isUser ? 20 : 4),
+                    bottomRight: Radius.circular(isUser ? 4 : 20),
                   ),
                 ),
+                child: showTyping
+                    ? const TypingIndicator()
+                    : Text(
+                        message.isStreaming ? '$text ▍' : text,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: isUser ? scheme.onPrimary : scheme.onSurface,
+                        ),
+                      ),
+              ),
+            for (final place in message.places)
+              PlaceCard(
+                place: place,
+                onDirections: () => openDirections(place),
+              ),
+          ],
         ),
       ),
     );

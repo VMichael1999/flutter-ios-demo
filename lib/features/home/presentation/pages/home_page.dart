@@ -17,7 +17,11 @@ class _HomePageState extends State<HomePage> {
     _QuickAction(icon: Icons.photo_camera_outlined, label: 'Cámara'),
     _QuickAction(icon: Icons.mic_none_rounded, label: 'Voz'),
     _QuickAction(icon: Icons.description_outlined, label: 'Documento'),
-    _QuickAction(icon: Icons.location_on_outlined, label: 'Ubicación'),
+    _QuickAction(
+      icon: Icons.location_on_outlined,
+      label: 'Ubicación',
+      prompt: 'Busca restaurantes cerca de mí',
+    ),
   ];
 
   final _promptController = TextEditingController();
@@ -115,7 +119,9 @@ class _HomePageState extends State<HomePage> {
                 for (final action in _quickActions)
                   _QuickActionCard(
                     action: action,
-                    onTap: () => _showComingSoon(action.label),
+                    onTap: () => action.prompt == null
+                        ? _showComingSoon(action.label)
+                        : _openChat(action.prompt),
                   ),
               ],
             ),
@@ -133,10 +139,13 @@ class _HomePageState extends State<HomePage> {
 }
 
 class _QuickAction {
-  const _QuickAction({required this.icon, required this.label});
+  const _QuickAction({required this.icon, required this.label, this.prompt});
 
   final IconData icon;
   final String label;
+
+  /// Mensaje que se envía a NOVA; `null` si la función aún no existe.
+  final String? prompt;
 }
 
 class _QuickActionCard extends StatelessWidget {

@@ -1,3 +1,4 @@
+import '../entities/ai_reply_chunk.dart';
 import '../repositories/ai_repository.dart';
 
 class SendMessage {
@@ -5,5 +6,5 @@ class SendMessage {
 
   final AiRepository _repository;
 
-  Stream<String> call(String message) => _repository.streamReply(message);
+  Stream<AiReplyChunk> call(String message) => _repository.streamReply(message);
 }

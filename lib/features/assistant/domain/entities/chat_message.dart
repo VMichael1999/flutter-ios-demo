@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../../places/domain/entities/place.dart';
+
 enum ChatRole { user, assistant }
 
 class ChatMessage extends Equatable {
@@ -8,6 +10,7 @@ class ChatMessage extends Equatable {
     required this.role,
     required this.text,
     this.isStreaming = false,
+    this.places = const [],
   });
 
   const ChatMessage.user({required String id, required String text})
@@ -17,11 +20,13 @@ class ChatMessage extends Equatable {
     required String id,
     String text = '',
     bool isStreaming = false,
+    List<Place> places = const [],
   }) : this(
           id: id,
           role: ChatRole.assistant,
           text: text,
           isStreaming: isStreaming,
+          places: places,
         );
 
   final String id;
@@ -31,19 +36,27 @@ class ChatMessage extends Equatable {
   /// `true` mientras la IA sigue generando este mensaje.
   final bool isStreaming;
 
+  /// Lugares encontrados por NOVA para esta respuesta.
+  final List<Place> places;
+
   bool get isUser => role == ChatRole.user;
 
   bool get isAssistant => role == ChatRole.assistant;
 
-  ChatMessage copyWith({String? text, bool? isStreaming}) {
+  ChatMessage copyWith({
+    String? text,
+    bool? isStreaming,
+    List<Place>? places,
+  }) {
     return ChatMessage(
       id: id,
       role: role,
       text: text ?? this.text,
       isStreaming: isStreaming ?? this.isStreaming,
+      places: places ?? this.places,
     );
   }
 
   @override
-  List<Object?> get props => [id, role, text, isStreaming];
+  List<Object?> get props => [id, role, text, isStreaming, places];
 }

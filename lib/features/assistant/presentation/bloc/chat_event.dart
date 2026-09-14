@@ -30,7 +30,7 @@ final class ChatCleared extends ChatEvent {
 final class _ChatChunkReceived extends ChatEvent {
   const _ChatChunkReceived(this.chunk);
 
-  final String chunk;
+  final AiReplyChunk chunk;
 
   @override
   List<Object?> get props => [chunk];

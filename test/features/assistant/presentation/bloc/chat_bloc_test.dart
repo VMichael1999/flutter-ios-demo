@@ -2,11 +2,14 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:nova_ai/core/errors/failures.dart';
+import 'package:nova_ai/features/assistant/domain/entities/ai_reply_chunk.dart';
 import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
 import 'package:nova_ai/features/assistant/domain/repositories/ai_repository.dart';
 import 'package:nova_ai/features/assistant/domain/usecases/reset_conversation.dart';
 import 'package:nova_ai/features/assistant/domain/usecases/send_message.dart';
 import 'package:nova_ai/features/assistant/presentation/bloc/chat_bloc.dart';
+
+import '../../../../fixtures/places_fixtures.dart';
 
 class _MockAiRepository extends Mock implements AiRepository {}
 
@@ -23,7 +26,9 @@ void main() {
   blocTest<ChatBloc, ChatState>(
     'muestra la respuesta del asistente fragmento a fragmento',
     setUp: () => when(() => repository.streamReply('Hola')).thenAnswer(
-      (_) => Stream.fromIterable(['Hola, ', 'soy NOVA']),
+      (_) => Stream.fromIterable(
+        const [AiTextChunk('Hola, '), AiTextChunk('soy NOVA')],
+      ),
     ),
     build: buildBloc,
     act: (bloc) => bloc.add(const ChatMessageSent('  Hola ')),
@@ -39,6 +44,36 @@ void main() {
       isA<ChatState>()
           .having((s) => s.status, 'status', ChatStatus.idle)
           .having((s) => s.messages.last.isStreaming, 'isStreaming', false),
+    ],
+  );
+
+  blocTest<ChatBloc, ChatState>(
+    'adjunta los lugares encontrados a la respuesta del asistente',
+    setUp: () => when(() => repository.streamReply('Restaurantes cerca'))
+        .thenAnswer(
+      (_) => Stream.fromIterable(const [
+        AiPlacesChunk([chifaPlace, bodegaPlace]),
+        AiTextChunk('El más cercano es Chifa Miraflores.'),
+      ]),
+    ),
+    build: buildBloc,
+    act: (bloc) => bloc.add(const ChatMessageSent('Restaurantes cerca')),
+    wait: const Duration(milliseconds: 10),
+    expect: () => [
+      isA<ChatState>().having((s) => s.messages.length, 'mensajes', 2),
+      isA<ChatState>().having(
+        (s) => s.messages.last.places,
+        'lugares',
+        [chifaPlace, bodegaPlace],
+      ),
+      isA<ChatState>().having(
+        (s) => s.messages.last.text,
+        'texto',
+        'El más cercano es Chifa Miraflores.',
+      ),
+      isA<ChatState>()
+          .having((s) => s.status, 'status', ChatStatus.idle)
+          .having((s) => s.messages.last.places, 'lugares', hasLength(2)),
     ],
   );
 

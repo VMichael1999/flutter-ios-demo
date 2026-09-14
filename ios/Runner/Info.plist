@@ -5,7 +5,23 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Proyect</string>
+	<string>NOVA AI</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>NOVA usa tu ubicación para encontrar lugares cerca de ti, como restaurantes o farmacias.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>NOVA usa la cámara para analizar las fotos que tomes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>NOVA accede a tus fotos para analizar las imágenes que elijas.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>NOVA usa el micrófono para que puedas hablarle.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>NOVA convierte tu voz en texto para entender lo que le pides.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>maps</string>
+		<string>comgooglemaps</string>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

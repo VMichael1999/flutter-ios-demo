@@ -31,12 +31,30 @@ abstract final class AppConfig {
     'NOVA_RECAPTCHA_SITE_KEY',
   );
 
+  /// Radio máximo para "lugares cerca de mí".
+  static const nearbyRadiusMeters = 5000;
+
+  /// Cantidad de lugares más cercanos que se devuelven.
+  static const nearbyResultLimit = 5;
+
+  /// Servidores de Overpass (OpenStreetMap), en orden de preferencia.
+  static final overpassEndpoints = [
+    Uri.parse('https://overpass-api.de/api/interpreter'),
+    Uri.parse('https://overpass.private.coffee/api/interpreter'),
+    Uri.parse('https://maps.mail.ru/osm/tools/overpass/api/interpreter'),
+  ];
+
   static const systemPrompt =
       'Eres NOVA, un asistente móvil inteligente creado con Flutter. '
       'Responde en el idioma del usuario, de forma clara, breve y amable. '
-      'Si te piden algo que todavía no puedes ejecutar (recordatorios, mapas, '
-      'cámara o documentos), explica que esa capacidad llegará en próximas '
-      'versiones de NOVA.';
+      'Cuando el usuario pida lugares cercanos (restaurantes, cafeterías, '
+      'farmacias, bancos, etc.) usa la función buscarLugaresCercanos: se usa '
+      'su ubicación actual y un radio máximo de 5 km. Nunca inventes lugares; '
+      'menciona solo los que devuelve la función, del más cercano al más '
+      'lejano y con su distancia. Si la función devuelve un error, explícalo y '
+      'di cómo resolverlo. Si te piden algo que todavía no puedes ejecutar '
+      '(recordatorios, cámara o documentos), explica que esa capacidad llegará '
+      'en próximas versiones de NOVA.';
 }
 
 /// Origen de las respuestas de la IA.

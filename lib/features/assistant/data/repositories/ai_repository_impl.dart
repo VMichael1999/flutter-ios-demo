@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/errors/failures.dart';
+import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../datasources/ai_remote_datasource.dart';
 
@@ -10,7 +11,7 @@ class AiRepositoryImpl implements AiRepository {
   final AiRemoteDataSource _dataSource;
 
   @override
-  Stream<String> streamReply(String message) async* {
+  Stream<AiReplyChunk> streamReply(String message) async* {
     // `await for` en lugar de `yield*`: con `yield*` los errores del stream
     // interno se reenvían tal cual y este `try` no llega a traducirlos.
     try {
