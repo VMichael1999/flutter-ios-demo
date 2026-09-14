@@ -26,9 +26,13 @@ class PlacesRepositoryImpl implements PlacesRepository {
     required int limit,
     String? name,
   }) async {
+    // Un local concreto suele tener pocas coincidencias: ampliar el radio por
+    // pasos solo multiplicaría las consultas, así que se busca directamente
+    // en el radio completo.
     final radii = [
-      for (final step in searchStepsMeters)
-        if (step < radiusMeters) step,
+      if (name == null)
+        for (final step in searchStepsMeters)
+          if (step < radiusMeters) step,
       radiusMeters,
     ];
 

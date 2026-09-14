@@ -38,6 +38,10 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
   /// Elementos que se piden por consulta antes de ordenar por distancia.
   static const maxElements = 200;
 
+  /// Al buscar un local por nombre se piden más, porque el filtro se aplica
+  /// después en el dispositivo.
+  static const maxElementsByName = 1000;
+
   /// La política de uso de Overpass pide identificar la app y un contacto.
   static const userAgent =
       'NOVA-AI/0.1 (+https://github.com/VMichael1999/flutter-ios-demo)';
@@ -54,11 +58,13 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
     required int radiusMeters,
     String? name,
   }) {
+    // El nombre se filtra en el dispositivo: un filtro por expresión regular
+    // en Overpass es costoso y empeora los tiempos de servidores saturados.
     final query = buildQuery(
       center: center,
       category: category,
       radiusMeters: radiusMeters,
-      name: name,
+      maxResults: name == null ? maxElements : maxElementsByName,
     );
 
     final result = Completer<List<PlaceModel>>();
@@ -71,7 +77,13 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
         try {
           if (result.isCompleted) return;
           final places = await _request(endpoint, query);
-          if (!result.isCompleted) result.complete(places);
+          if (!result.isCompleted) {
+            result.complete(
+              name == null
+                  ? places
+                  : places.where((place) => place.matchesName(name)).toList(),
+            );
+          }
         } catch (error) {
           debugPrint('Overpass falló en $endpoint: $error');
           errors.add(error);
@@ -129,27 +141,11 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
     required GeoPoint center,
     required PlaceCategory category,
     required int radiusMeters,
-    String? name,
+    int maxResults = maxElements,
   }) {
-    final nameFilter = switch (sanitizePlaceName(name)) {
-      final String pattern => '["name"~"$pattern",i]',
-      null => '',
-    };
     return '[out:json][timeout:15];'
-        'nwr["${category.osmKey}"="${category.osmValue}"]$nameFilter'
+        'nwr["${category.osmKey}"="${category.osmValue}"]'
         '(around:$radiusMeters,${center.latitude},${center.longitude});'
-        'out center $maxElements;';
-  }
-
-  /// Deja solo letras, números y espacios: el nombre (leído, por ejemplo, de
-  /// un letrero en una foto) se usa como patrón de búsqueda sin inyecciones.
-  @visibleForTesting
-  static String? sanitizePlaceName(String? name) {
-    if (name == null) return null;
-    final cleaned = name
-        .replaceAll(RegExp(r'[^\p{L}\p{N} ]', unicode: true), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
-    return cleaned.isEmpty ? null : cleaned;
+        'out center $maxResults;';
   }
 }

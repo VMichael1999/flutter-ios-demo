@@ -81,19 +81,21 @@ void main() {
     expect(places.map((p) => p.id), ['cerca', 'lejos']);
   });
 
-  test('pasa el nombre buscado en cada consulta', () async {
+  test('busca un local por nombre con una sola consulta en el radio completo',
+      () async {
     final dataSource = _FakePlacesDataSource({});
     final repository = PlacesRepositoryImpl(dataSource);
 
     await repository.searchNearby(
       center: testCenter,
-      category: PlaceCategory.restaurant,
-      radiusMeters: 2500,
-      limit: 1,
-      name: 'Chifa',
+      category: PlaceCategory.supermarket,
+      radiusMeters: 5000,
+      limit: 5,
+      name: 'Tottus',
     );
 
-    expect(dataSource.requestedNames, ['Chifa', 'Chifa']);
+    expect(dataSource.requestedRadii, [5000]);
+    expect(dataSource.requestedNames, ['Tottus']);
   });
 
   test('muestra una sola vez el mismo local registrado dos veces', () async {

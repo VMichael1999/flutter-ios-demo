@@ -84,24 +84,24 @@ void main() {
     expect(sent.headers['User-Agent'], OverpassPlacesDataSource.userAgent);
   });
 
-  test('filtra por el nombre del local sin permitir inyecciones', () {
-    final query = OverpassPlacesDataSource.buildQuery(
+  test('busca un local por nombre filtrando en el dispositivo', () async {
+    late String query;
+    final client = MockClient((request) async {
+      query = Uri.decodeQueryComponent(request.body);
+      return jsonResponse(overpassBody);
+    });
+
+    final places = await dataSourceWith(client).fetchNearby(
       center: testCenter,
       category: PlaceCategory.restaurant,
       radiusMeters: 5000,
-      name: 'Café "Tostado"; out;',
+      name: 'chifa',
     );
 
-    expect(query, contains('["name"~"Café Tostado out",i]'));
-    expect(OverpassPlacesDataSource.sanitizePlaceName('  ~~~  '), isNull);
-    expect(
-      OverpassPlacesDataSource.buildQuery(
-        center: testCenter,
-        category: PlaceCategory.restaurant,
-        radiusMeters: 5000,
-      ),
-      isNot(contains('"name"')),
-    );
+    // Sin expresión regular en el servidor, que es lenta y admite inyecciones.
+    expect(query, isNot(contains('"name"')));
+    expect(query, contains('out center ${OverpassPlacesDataSource.maxElementsByName}'));
+    expect(places.map((p) => p.name), ['Chifa Miraflores']);
   });
 
   test('devuelve solo los lugares con nombre y coordenadas', () async {

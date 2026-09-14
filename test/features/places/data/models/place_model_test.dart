@@ -61,6 +61,53 @@ void main() {
     });
   });
 
+  group('matchesName', () {
+    const tottus = PlaceModel(
+      id: 'way/9',
+      name: 'Hipermercados Tottus',
+      latitude: 0,
+      longitude: 0,
+      brand: 'Tottus',
+    );
+
+    test('ignora mayúsculas y tildes', () {
+      expect(tottus.matchesName('tottus'), isTrue);
+      expect(tottus.matchesName('HIPERMERCADOS'), isTrue);
+      expect(
+        const PlaceModel(id: '1', name: 'Café Tostado', latitude: 0, longitude: 0)
+            .matchesName('cafe  tostado'),
+        isTrue,
+      );
+    });
+
+    test('también busca en la marca', () {
+      const store = PlaceModel(
+        id: '2',
+        name: 'Supermercado Miraflores',
+        latitude: 0,
+        longitude: 0,
+        brand: 'Tottus',
+      );
+      expect(store.matchesName('Tottus'), isTrue);
+    });
+
+    test('descarta locales con otro nombre', () {
+      expect(tottus.matchesName('Plaza Vea'), isFalse);
+    });
+  });
+
+  test('lee la marca u operador del local', () {
+    final model = PlaceModel.fromOverpassElement({
+      'type': 'node',
+      'id': 5,
+      'lat': -12.1,
+      'lon': -77.0,
+      'tags': {'name': 'Tienda 24', 'operator': 'Tottus'},
+    });
+
+    expect(model?.brand, 'Tottus');
+  });
+
   test('toEntity calcula la distancia desde el centro', () {
     const model = PlaceModel(
       id: 'node/1',
