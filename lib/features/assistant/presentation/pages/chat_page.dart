@@ -233,7 +233,7 @@ class _EmptyChat extends StatelessWidget {
 
   static const _suggestions = [
     '¿Qué puedes hacer?',
-    'Busca restaurantes cerca de mí',
+    '¿Qué hay cerca de mí?',
     'Ayúdame a organizar mi semana',
   ];
 
