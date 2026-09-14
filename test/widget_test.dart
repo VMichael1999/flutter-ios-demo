@@ -5,9 +5,13 @@ import 'package:nova_ai/core/di/injection.dart';
 import 'package:nova_ai/features/assistant/presentation/pages/chat_page.dart';
 import 'package:nova_ai/features/splash/presentation/pages/splash_page.dart';
 import 'package:nova_ai/features/voice/presentation/pages/voice_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  setUp(() => configureDependencies(useFirebaseAi: false));
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+    return configureDependencies(useFirebaseAi: false);
+  });
 
   Future<void> openHome(WidgetTester tester) async {
     await tester.pumpWidget(const NovaApp());

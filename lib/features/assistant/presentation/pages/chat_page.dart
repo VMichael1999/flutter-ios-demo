@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../../../core/router/app_routes.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/services/speech_service.dart';
 import '../../../../core/theme/motion.dart';
@@ -16,13 +18,21 @@ import '../widgets/message_bubble.dart';
 /// Cómo abrir el chat: con un mensaje inicial, un texto a medio escribir o
 /// preguntando de dónde tomar una imagen.
 class ChatLaunchOptions {
-  const ChatLaunchOptions({this.prompt, this.draft, this.pickImage = false});
+  const ChatLaunchOptions({
+    this.prompt,
+    this.draft,
+    this.pickImage = false,
+    this.conversationId,
+  });
 
   final String? prompt;
   final ChatDraft? draft;
 
   /// Pregunta al entrar si usar la cámara o la galería.
   final bool pickImage;
+
+  /// Conversación del historial que se retoma.
+  final String? conversationId;
 }
 
 /// Texto que se deja escrito, sin enviar, con el cursor entre [prefix] y
@@ -46,8 +56,12 @@ class ChatPage extends StatefulWidget {
     this.initialPrompt,
     this.initialDraft,
     this.pickImageOnOpen = false,
+    this.conversationId,
     this.aiMode = AiMode.firebase,
   });
+
+  /// Conversación del historial que se abre para seguirla.
+  final String? conversationId;
 
   final MediaPickerService mediaPicker;
 
@@ -93,6 +107,9 @@ class _ChatPageState extends State<ChatPage> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _inputFocus.requestFocus();
       });
+    }
+    if (widget.conversationId case final id?) {
+      context.read<ChatBloc>().add(ChatConversationOpened(id));
     }
     if (widget.pickImageOnOpen) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -253,6 +270,11 @@ class _ChatPageState extends State<ChatPage> {
       appBar: AppBar(
         title: const Text('NOVA'),
         actions: [
+          IconButton(
+            tooltip: 'Historial',
+            icon: const Icon(Icons.history_rounded),
+            onPressed: () => context.push(AppRoutes.history),
+          ),
           IconButton(
             tooltip: 'Nueva conversación',
             icon: const Icon(Icons.refresh_rounded),

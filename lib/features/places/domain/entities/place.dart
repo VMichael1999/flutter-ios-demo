@@ -23,8 +23,14 @@ class Place extends Equatable {
   final String? address;
 
   @override
-  List<Object?> get props =>
-      [id, name, category, location, distanceMeters, address];
+  List<Object?> get props => [
+    id,
+    name,
+    category,
+    location,
+    distanceMeters,
+    address,
+  ];
 }
 
 class NearbyPlacesResult extends Equatable {

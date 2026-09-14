@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../../core/errors/failures.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_attachment.dart';
+import '../../domain/entities/chat_message.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../datasources/ai_remote_datasource.dart';
 
@@ -45,4 +46,8 @@ class AiRepositoryImpl implements AiRepository {
 
   @override
   void resetConversation() => _dataSource.reset();
+
+  @override
+  void restoreConversation(List<ChatMessage> history) =>
+      _dataSource.restore(history);
 }

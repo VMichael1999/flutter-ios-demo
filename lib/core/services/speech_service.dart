@@ -27,11 +27,15 @@ abstract interface class SpeechService {
 
   /// Deja de escuchar descartando lo reconocido.
   Future<void> cancel();
+
+  /// Volumen de la voz mientras se escucha, de 0 a 1. Sirve para mostrar que
+  /// el micrófono de verdad está captando algo.
+  ValueListenable<double> get soundLevel;
 }
 
 class SpeechToTextService implements SpeechService {
   SpeechToTextService([SpeechToText? speech])
-      : _speech = speech ?? SpeechToText();
+    : _speech = speech ?? SpeechToText();
 
   /// Silencio tras el cual se da la frase por terminada.
   static const pauseFor = Duration(seconds: 3);
@@ -40,9 +44,24 @@ class SpeechToTextService implements SpeechService {
   /// Si el reconocedor no avisa que terminó, se cierra igual tras este tiempo.
   static const _doneFallback = Duration(seconds: 3);
 
+  /// Si en este tiempo no empieza a escuchar, algo falló sin avisar.
+  static const _startTimeout = Duration(seconds: 6);
+
   final SpeechToText _speech;
+  final _soundLevel = ValueNotifier<double>(0);
+
   StreamController<SpeechUpdate>? _session;
   String? _localeId;
+
+  /// Cada intento de escuchar tiene un número: los avisos de un intento
+  /// anterior (por ejemplo, antes de un reintento) se ignoran.
+  int _attempt = 0;
+  bool _isListening = false;
+  bool _retried = false;
+  Timer? _startWatchdog;
+
+  @override
+  ValueListenable<double> get soundLevel => _soundLevel;
 
   @override
   Stream<SpeechUpdate> listen() {
@@ -54,12 +73,13 @@ class SpeechToTextService implements SpeechService {
       onListen: () => _start(session),
       onCancel: () async {
         if (identical(_session, session)) {
-          _session = null;
+          _finishSession();
           await _speech.cancel();
         }
       },
     );
     _session = session;
+    _retried = false;
     return session.stream;
   }
 
@@ -69,7 +89,7 @@ class SpeechToTextService implements SpeechService {
   @override
   Future<void> cancel() async {
     final session = _session;
-    _session = null;
+    _finishSession();
     if (session != null && !session.isClosed) await session.close();
     await _speech.cancel();
   }
@@ -85,11 +105,30 @@ class SpeechToTextService implements SpeechService {
       );
       return;
     }
-    if (!identical(_session, session)) return;
+    if (identical(_session, session)) await _listen(session);
+  }
+
+  Future<void> _listen(StreamController<SpeechUpdate> session) async {
+    final attempt = ++_attempt;
+    _isListening = false;
+    _startWatchdog?.cancel();
+    _startWatchdog = Timer(_startTimeout, () {
+      if (attempt != _attempt || _isListening) return;
+      debugPrint('Voz: el reconocedor no empezó a escuchar');
+      _fail(
+        session,
+        const SpeechFailure(
+          'No pude activar el reconocimiento de voz. Inténtalo otra vez.',
+        ),
+      );
+      _speech.cancel();
+    });
 
     try {
+      debugPrint('Voz: escuchando (idioma: ${_localeId ?? 'del teléfono'})');
       await _speech.listen(
         onResult: (result) => _onResult(session, result),
+        onSoundLevelChange: _onSoundLevel,
         listenOptions: SpeechListenOptions(
           partialResults: true,
           cancelOnError: true,
@@ -101,7 +140,7 @@ class SpeechToTextService implements SpeechService {
         ),
       );
     } catch (error) {
-      debugPrint('No se pudo empezar a escuchar: $error');
+      debugPrint('Voz: no se pudo empezar a escuchar: $error');
       _fail(session, const SpeechFailure('No pude empezar a escucharte.'));
     }
   }
@@ -112,11 +151,13 @@ class SpeechToTextService implements SpeechService {
       final ready = await _speech.initialize(
         onStatus: _onStatus,
         onError: _onError,
+        debugLogging: kDebugMode,
       );
+      debugPrint('Voz: reconocedor disponible: $ready');
       if (ready) _localeId ??= await _spanishLocale();
       return ready;
     } catch (error) {
-      debugPrint('Reconocimiento de voz no disponible: $error');
+      debugPrint('Voz: reconocimiento no disponible: $error');
       return false;
     }
   }
@@ -133,7 +174,7 @@ class SpeechToTextService implements SpeechService {
         if (_isSpanish(locale.localeId)) return locale.localeId;
       }
     } catch (error) {
-      debugPrint('No se pudo elegir el idioma de voz: $error');
+      debugPrint('Voz: no se pudo elegir el idioma: $error');
     }
     return null;
   }
@@ -146,45 +187,79 @@ class SpeechToTextService implements SpeechService {
     SpeechRecognitionResult result,
   ) {
     if (session.isClosed) return;
+    debugPrint(
+      'Voz: oí "${result.recognizedWords}" (final: ${result.finalResult})',
+    );
     session.add(
       SpeechUpdate(result.recognizedWords, isFinal: result.finalResult),
     );
     if (result.finalResult) _complete(session);
   }
 
+  void _onSoundLevel(double level) {
+    // Android entrega decibelios aproximadamente entre -2 y 10.
+    _soundLevel.value = ((level + 2) / 12).clamp(0.0, 1.0);
+  }
+
   void _onStatus(String status) {
+    debugPrint('Voz: estado $status');
     final session = _session;
     if (session == null) return;
-    if (status == SpeechToText.doneStatus) {
-      _complete(session);
+    final attempt = _attempt;
+    if (status == SpeechToText.listeningStatus) {
+      _isListening = true;
+    } else if (status == SpeechToText.doneStatus) {
+      if (_isListening) _complete(session);
     } else if (status == SpeechToText.notListeningStatus) {
-      Timer(_doneFallback, () => _complete(session));
+      Timer(_doneFallback, () {
+        if (attempt == _attempt) _complete(session);
+      });
     }
   }
 
   void _onError(SpeechRecognitionError error) {
+    debugPrint('Voz: error ${error.errorMsg} (permanente: ${error.permanent})');
     final session = _session;
     if (session == null || !error.permanent) return;
     switch (error.errorMsg) {
       // No se escuchó nada: la frase termina vacía, no es un fallo.
       case 'error_no_match' || 'error_speech_timeout' || 'no-speech':
         _complete(session);
+      case 'error_language_unavailable' || 'error_language_not_supported':
+        if (!_retried && _localeId != null) {
+          // El reconocedor no tiene esa variante de español: se prueba con el
+          // idioma que tenga configurado el teléfono.
+          _retried = true;
+          _localeId = null;
+          _retry(session);
+        } else {
+          _fail(
+            session,
+            const SpeechFailure(
+              'Tu teléfono no tiene el reconocimiento de voz en español. '
+              'Descárgalo en Ajustes › Google › Voz › Reconocimiento sin '
+              'conexión.',
+            ),
+          );
+        }
+      case 'error_client' || 'error_busy' || 'error_server_disconnected'
+          when !_retried:
+        _retried = true;
+        _retry(session);
       // Android usa "error_…"; el navegador, los nombres de Web Speech API.
       case 'error_permission' ||
-            'error_insufficient_permissions' ||
-            'not-allowed' ||
-            'service-not-allowed' ||
-            'audio-capture':
+          'error_insufficient_permissions' ||
+          'not-allowed' ||
+          'service-not-allowed' ||
+          'audio-capture':
         _fail(
           session,
-          const SpeechFailure(
-            'NOVA necesita permiso para usar el micrófono.',
-          ),
+          const SpeechFailure('NOVA necesita permiso para usar el micrófono.'),
         );
       case 'error_network' ||
-            'error_network_timeout' ||
-            'error_server' ||
-            'network':
+          'error_network_timeout' ||
+          'error_server' ||
+          'network':
         _fail(
           session,
           const SpeechFailure(
@@ -196,13 +271,31 @@ class SpeechToTextService implements SpeechService {
     }
   }
 
+  void _retry(StreamController<SpeechUpdate> session) {
+    debugPrint('Voz: reintentando');
+    // Invalida los avisos del intento fallido mientras arranca el nuevo.
+    _attempt++;
+    Timer(const Duration(milliseconds: 300), () {
+      if (identical(_session, session) && !session.isClosed) _listen(session);
+    });
+  }
+
   void _complete(StreamController<SpeechUpdate> session) {
-    if (identical(_session, session)) _session = null;
+    if (identical(_session, session)) _finishSession();
     if (!session.isClosed) session.close();
   }
 
   void _fail(StreamController<SpeechUpdate> session, SpeechFailure failure) {
+    debugPrint('Voz: fallo "${failure.message}"');
     if (!session.isClosed) session.addError(failure);
     _complete(session);
+  }
+
+  void _finishSession() {
+    _session = null;
+    _attempt++;
+    _isListening = false;
+    _startWatchdog?.cancel();
+    _soundLevel.value = 0;
   }
 }

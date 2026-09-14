@@ -1,16 +1,26 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/nova_logo.dart';
 import '../cubit/voice_conversation_cubit.dart';
 
 /// NOVA en el centro del modo voz, con ondas que cambian según escucha,
-/// piensa o habla.
+/// piensa o habla. Mientras escucha, crece con el volumen de la voz para que
+/// se note que el micrófono está captando.
 class VoiceOrb extends StatefulWidget {
-  const VoiceOrb({super.key, required this.status, this.size = 220});
+  const VoiceOrb({
+    super.key,
+    required this.status,
+    this.level,
+    this.size = 220,
+  });
 
   final VoiceStatus status;
+
+  /// Volumen del micrófono, de 0 a 1.
+  final ValueListenable<double>? level;
   final double size;
 
   @override
@@ -23,6 +33,9 @@ class _VoiceOrbState extends State<VoiceOrb>
     vsync: this,
     duration: const Duration(milliseconds: 1800),
   );
+
+  /// Volumen suavizado: el micrófono salta de golpe y el dibujo no debe.
+  double _level = 0;
 
   @override
   void didChangeDependencies() {
@@ -46,26 +59,40 @@ class _VoiceOrbState extends State<VoiceOrb>
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final level = widget.level;
 
     return ExcludeSemantics(
       child: SizedBox.square(
         dimension: widget.size,
         child: AnimatedBuilder(
-          animation: _controller,
+          animation: Listenable.merge([_controller, if (level != null) level]),
           builder: (context, child) {
-            final bob = widget.status == VoiceStatus.thinking
-                ? math.sin(_controller.value * 2 * math.pi) * 6
-                : 0.0;
+            final target =
+                widget.status == VoiceStatus.listening
+                    ? (level?.value ?? 0)
+                    : 0.0;
+            _level += (target - _level) * 0.2;
+            final bob =
+                widget.status == VoiceStatus.thinking
+                    ? math.sin(_controller.value * 2 * math.pi) * 6
+                    : 0.0;
             return CustomPaint(
               painter: _OrbPainter(
                 progress: _controller.value,
                 status: widget.status,
+                level: _level,
                 primary: scheme.primary,
                 accent: scheme.tertiary,
                 ring: scheme.outlineVariant,
               ),
               child: Center(
-                child: Transform.translate(offset: Offset(0, bob), child: child),
+                child: Transform.translate(
+                  offset: Offset(0, bob),
+                  child: Transform.scale(
+                    scale: 1 + 0.12 * _level,
+                    child: child,
+                  ),
+                ),
               ),
             );
           },
@@ -80,6 +107,7 @@ class _OrbPainter extends CustomPainter {
   _OrbPainter({
     required this.progress,
     required this.status,
+    required this.level,
     required this.primary,
     required this.accent,
     required this.ring,
@@ -87,6 +115,7 @@ class _OrbPainter extends CustomPainter {
 
   final double progress;
   final VoiceStatus status;
+  final double level;
   final Color primary;
   final Color accent;
   final Color ring;
@@ -98,6 +127,12 @@ class _OrbPainter extends CustomPainter {
 
     switch (status) {
       case VoiceStatus.listening:
+        // Halo que respira con la voz, más las ondas de siempre.
+        canvas.drawCircle(
+          center,
+          maxRadius * (0.5 + 0.35 * level),
+          Paint()..color = primary.withValues(alpha: 0.12 + 0.2 * level),
+        );
         _pulse(canvas, center, maxRadius, primary, progress);
       case VoiceStatus.speaking:
         _pulse(canvas, center, maxRadius, accent, (progress * 2) % 1);
@@ -105,7 +140,8 @@ class _OrbPainter extends CustomPainter {
         for (var i = 0; i < 3; i++) {
           final angle = progress * 2 * math.pi + i * 2 * math.pi / 3;
           canvas.drawCircle(
-            center + Offset(math.cos(angle), math.sin(angle)) * maxRadius * 0.72,
+            center +
+                Offset(math.cos(angle), math.sin(angle)) * maxRadius * 0.72,
             maxRadius * 0.045,
             Paint()..color = primary.withValues(alpha: 0.4 + 0.25 * i),
           );
@@ -144,6 +180,7 @@ class _OrbPainter extends CustomPainter {
   bool shouldRepaint(_OrbPainter oldDelegate) =>
       oldDelegate.progress != progress ||
       oldDelegate.status != status ||
+      oldDelegate.level != level ||
       oldDelegate.primary != primary ||
       oldDelegate.accent != accent ||
       oldDelegate.ring != ring;

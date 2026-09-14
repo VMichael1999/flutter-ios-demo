@@ -9,8 +9,10 @@ void main() {
     });
 
     test('un grado de latitud mide unos 111 km', () {
-      final distance =
-          distanceInMeters(const GeoPoint(0, 0), const GeoPoint(1, 0));
+      final distance = distanceInMeters(
+        const GeoPoint(0, 0),
+        const GeoPoint(1, 0),
+      );
       expect(distance, closeTo(111195, 100));
     });
 

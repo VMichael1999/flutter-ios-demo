@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/assistant/presentation/bloc/chat_bloc.dart';
 import '../../features/assistant/presentation/pages/chat_page.dart';
+import '../../features/history/presentation/pages/history_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
@@ -26,7 +27,7 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (context, state) => const HomePage(),
+        builder: (context, state) => HomePage(conversations: getIt()),
       ),
       GoRoute(
         path: AppRoutes.chat,
@@ -44,6 +45,7 @@ GoRouter createAppRouter() {
               initialPrompt: options.prompt,
               initialDraft: options.draft,
               pickImageOnOpen: options.pickImage,
+              conversationId: options.conversationId,
               aiMode: getIt<AiMode>(),
             ),
           );
@@ -51,10 +53,15 @@ GoRouter createAppRouter() {
       ),
       GoRoute(
         path: AppRoutes.voice,
-        builder: (context, state) => BlocProvider(
-          create: (_) => getIt<VoiceConversationCubit>(),
-          child: const VoicePage(),
-        ),
+        builder:
+            (context, state) => BlocProvider(
+              create: (_) => getIt<VoiceConversationCubit>(),
+              child: const VoicePage(),
+            ),
+      ),
+      GoRoute(
+        path: AppRoutes.history,
+        builder: (context, state) => HistoryPage(conversations: getIt()),
       ),
     ],
   );

@@ -13,6 +13,7 @@ class ChatMessage extends Equatable {
     this.isStreaming = false,
     this.places = const [],
     this.attachment,
+    this.hadImage = false,
   });
 
   const ChatMessage.user({
@@ -47,9 +48,14 @@ class ChatMessage extends Equatable {
   /// Imagen que el usuario envió con el mensaje.
   final ChatAttachment? attachment;
 
+  /// El mensaje llevaba una imagen que no se guarda en el historial.
+  final bool hadImage;
+
   bool get isUser => role == ChatRole.user;
 
   bool get isAssistant => role == ChatRole.assistant;
+
+  bool get hasImage => attachment != null || hadImage;
 
   ChatMessage copyWith({String? text, bool? isStreaming, List<Place>? places}) {
     return ChatMessage(
@@ -59,9 +65,18 @@ class ChatMessage extends Equatable {
       isStreaming: isStreaming ?? this.isStreaming,
       places: places ?? this.places,
       attachment: attachment,
+      hadImage: hadImage,
     );
   }
 
   @override
-  List<Object?> get props => [id, role, text, isStreaming, places, attachment];
+  List<Object?> get props => [
+    id,
+    role,
+    text,
+    isStreaming,
+    places,
+    attachment,
+    hadImage,
+  ];
 }

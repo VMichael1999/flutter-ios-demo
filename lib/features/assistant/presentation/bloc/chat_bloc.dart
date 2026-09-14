@@ -1,14 +1,18 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
 import '../../../../core/errors/failures.dart';
+import '../../../history/domain/entities/conversation.dart';
+import '../../../history/domain/repositories/conversation_repository.dart';
 import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_attachment.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/usecases/reset_conversation.dart';
+import '../../domain/usecases/restore_conversation.dart';
 import '../../domain/usecases/send_message.dart';
 
 part 'chat_event.dart';
@@ -18,12 +22,19 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ChatBloc({
     required SendMessage sendMessage,
     required ResetConversation resetConversation,
+    RestoreConversation? restoreConversation,
+    ConversationRepository? conversations,
+    DateTime Function() clock = DateTime.now,
   }) : _sendMessage = sendMessage,
        _resetConversation = resetConversation,
+       _restoreConversation = restoreConversation,
+       _conversations = conversations,
+       _clock = clock,
        super(const ChatState()) {
     on<ChatMessageSent>(_onMessageSent);
     on<ChatGenerationStopped>(_onGenerationStopped);
     on<ChatCleared>(_onCleared);
+    on<ChatConversationOpened>(_onConversationOpened);
     on<_ChatChunkReceived>(_onChunkReceived);
     on<_ChatReplyCompleted>(_onReplyCompleted);
     on<_ChatReplyFailed>(_onReplyFailed);
@@ -31,9 +42,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
   final SendMessage _sendMessage;
   final ResetConversation _resetConversation;
+  final RestoreConversation? _restoreConversation;
+
+  /// Sin repositorio la conversación no se guarda en el historial.
+  final ConversationRepository? _conversations;
+  final DateTime Function() _clock;
 
   StreamSubscription<AiReplyChunk>? _replySubscription;
   int _messageCount = 0;
+
+  /// Conversación del historial que se está escribiendo.
+  String? _conversationId;
 
   String _nextId() =>
       '${DateTime.now().microsecondsSinceEpoch}-${_messageCount++}';
@@ -43,6 +62,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     final attachment = event.attachment;
     if ((text.isEmpty && attachment == null) || state.isStreaming) return;
 
+    _conversationId ??= _nextId();
     emit(
       state.copyWith(
         messages: [
@@ -122,12 +142,36 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         errorMessage: event.message,
       ),
     );
+    _saveConversation();
   }
 
+  /// Empieza una conversación nueva; la anterior queda en el historial.
   Future<void> _onCleared(ChatCleared event, Emitter<ChatState> emit) async {
     await _cancelReply();
     _resetConversation();
+    _conversationId = null;
     emit(const ChatState());
+  }
+
+  Future<void> _onConversationOpened(
+    ChatConversationOpened event,
+    Emitter<ChatState> emit,
+  ) async {
+    final conversation = await _conversations?.load(event.id);
+    if (conversation == null) {
+      emit(
+        state.copyWith(
+          status: ChatStatus.failure,
+          errorMessage: 'No encontré esa conversación en el historial.',
+        ),
+      );
+      return;
+    }
+    await _cancelReply();
+    _conversationId = conversation.id;
+    // Gemini retoma el contexto: se puede seguir la conversación donde quedó.
+    _restoreConversation?.call(conversation.messages);
+    emit(ChatState(messages: conversation.messages));
   }
 
   void _finishReply(Emitter<ChatState> emit) {
@@ -138,6 +182,23 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         ),
         status: ChatStatus.idle,
       ),
+    );
+    _saveConversation();
+  }
+
+  void _saveConversation() {
+    final conversations = _conversations;
+    final id = _conversationId;
+    if (conversations == null || id == null) return;
+
+    unawaited(
+      conversations
+          .save(
+            Conversation(id: id, updatedAt: _clock(), messages: state.messages),
+          )
+          .catchError((Object error) {
+            debugPrint('No se pudo guardar la conversación: $error');
+          }),
     );
   }
 

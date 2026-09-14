@@ -32,7 +32,7 @@ class _VoicePageState extends State<VoicePage> {
 
   static String _statusLabel(VoiceState state) => switch (state.status) {
     VoiceStatus.idle => 'Toca el micrófono y habla',
-    VoiceStatus.listening => 'Te escucho…',
+    VoiceStatus.listening => 'Te escucho… habla ahora',
     VoiceStatus.thinking => 'Pensando…',
     VoiceStatus.speaking => 'Hablando · toca para interrumpir',
     VoiceStatus.failure =>
@@ -61,7 +61,13 @@ class _VoicePageState extends State<VoicePage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            VoiceOrb(status: state.status),
+                            VoiceOrb(
+                              status: state.status,
+                              level:
+                                  context
+                                      .read<VoiceConversationCubit>()
+                                      .soundLevel,
+                            ),
                             const SizedBox(height: 24),
                             Semantics(
                               liveRegion: true,

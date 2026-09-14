@@ -93,6 +93,8 @@ class MessageBubble extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (message.attachment == null && message.hadImage)
+                const _SavedImageNote(),
               // De "pensando" a la respuesta sin salto: fundido y el alto
               // se ajusta suave mientras llega el texto.
               AnimatedSize(
@@ -123,6 +125,39 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// En el historial las fotos no se guardan: queda una nota en su lugar.
+class _SavedImageNote extends StatelessWidget {
+  const _SavedImageNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.image_outlined, size: 18, color: scheme.onSurfaceVariant),
+          const SizedBox(width: 6),
+          Text(
+            'Imagen enviada',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }

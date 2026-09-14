@@ -28,6 +28,16 @@ final class ChatCleared extends ChatEvent {
   const ChatCleared();
 }
 
+/// Abre una conversación guardada en el historial para seguirla.
+final class ChatConversationOpened extends ChatEvent {
+  const ChatConversationOpened(this.id);
+
+  final String id;
+
+  @override
+  List<Object?> get props => [id];
+}
+
 final class _ChatChunkReceived extends ChatEvent {
   const _ChatChunkReceived(this.chunk);
 

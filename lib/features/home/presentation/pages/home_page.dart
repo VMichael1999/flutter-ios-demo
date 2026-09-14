@@ -1,7 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/app_routes.dart';
+import '../../../history/domain/entities/conversation.dart';
+import '../../../history/domain/repositories/conversation_repository.dart';
+import '../../../history/presentation/widgets/conversation_tile.dart';
 import '../../../../shared/widgets/nova_logo.dart';
 import '../../../../shared/widgets/nova_mark.dart';
 import '../../../../shared/widgets/pressable.dart';
@@ -26,23 +31,56 @@ String shortSpanishDate(DateTime date) {
 }
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key, this.clock = DateTime.now});
+  const HomePage({super.key, this.clock = DateTime.now, this.conversations});
 
   /// Hora actual. Los tests la fijan para que el saludo no dependa del reloj.
   final DateTime Function() clock;
+
+  /// Historial para mostrar las conversaciones recientes.
+  final ConversationRepository? conversations;
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  static const _recentLimit = 3;
+
   final _promptController = TextEditingController();
+  List<ConversationSummary> _recent = const [];
+  StreamSubscription<void>? _historyChanges;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecent();
+    _historyChanges = widget.conversations?.changes.listen(
+      (_) => _loadRecent(),
+    );
+  }
 
   @override
   void dispose() {
+    _historyChanges?.cancel();
     _promptController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadRecent() async {
+    final conversations = widget.conversations;
+    if (conversations == null) return;
+    final recent = await conversations.recent();
+    if (mounted) {
+      setState(() => _recent = recent.take(_recentLimit).toList());
+    }
+  }
+
+  void _openHistory() => context.push(AppRoutes.history);
+
+  void _openConversation(ConversationSummary summary) => context.push(
+    AppRoutes.chat,
+    extra: ChatLaunchOptions(conversationId: summary.id),
+  );
 
   void _openChat([String? prompt]) {
     context.push(AppRoutes.chat, extra: prompt);
@@ -108,6 +146,11 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+                IconButton(
+                  tooltip: 'Historial',
+                  onPressed: _openHistory,
+                  icon: const Icon(Icons.history_rounded),
+                ),
               ],
             ),
             const SizedBox(height: 40),
@@ -152,6 +195,35 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+            if (_recent.isNotEmpty) ...[
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Recientes',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _openHistory,
+                    child: const Text('Ver todo'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              for (final summary in _recent)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: ConversationTile(
+                    summary: summary,
+                    now: now,
+                    onTap: () => _openConversation(summary),
+                  ),
+                ),
+            ],
             const SizedBox(height: 36),
             Text(
               'Atajos',

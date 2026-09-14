@@ -62,9 +62,9 @@ class PlaceModel {
   bool matchesName(String query) {
     final needle = normalizeForSearch(query);
     if (needle.isEmpty) return true;
-    return [name, brand]
-        .whereType<String>()
-        .any((text) => normalizeForSearch(text).contains(needle));
+    return [name, brand].whereType<String>().any(
+      (text) => normalizeForSearch(text).contains(needle),
+    );
   }
 
   Place toEntity({required GeoPoint center, required PlaceCategory category}) {

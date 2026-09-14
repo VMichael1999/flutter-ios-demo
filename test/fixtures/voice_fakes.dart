@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:nova_ai/core/errors/failures.dart';
 import 'package:nova_ai/core/services/speech_service.dart';
 import 'package:nova_ai/core/services/text_to_speech_service.dart';
@@ -11,6 +12,9 @@ class FakeSpeechService implements SpeechService {
   int listenCalls = 0;
   int stopCalls = 0;
   int cancelCalls = 0;
+
+  @override
+  final ValueNotifier<double> soundLevel = ValueNotifier(0);
 
   @override
   Stream<SpeechUpdate> listen() {
@@ -43,11 +47,12 @@ class FakeSpeechService implements SpeechService {
 }
 
 /// Voz simulada: guarda lo que se leyó. Con [holdSpeech] no termina de
-/// hablar hasta [finishSpeaking] o [stop].
+/// hablar hasta [finishSpeaking] o [stop]; con [fails] lanza un error.
 class FakeTextToSpeech implements TextToSpeechService {
-  FakeTextToSpeech({this.holdSpeech = false});
+  FakeTextToSpeech({this.holdSpeech = false, this.fails = false});
 
   final bool holdSpeech;
+  final bool fails;
   final spoken = <String>[];
   int stopCalls = 0;
   Completer<void>? _speaking;
@@ -55,6 +60,7 @@ class FakeTextToSpeech implements TextToSpeechService {
   @override
   Future<void> speak(String text) {
     spoken.add(text);
+    if (fails) return Future.error(Exception('Sin voz'));
     if (!holdSpeech) return Future.value();
     return (_speaking = Completer<void>()).future;
   }

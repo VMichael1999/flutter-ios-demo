@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nova_ai/core/theme/app_theme.dart';
+import 'package:nova_ai/features/assistant/domain/entities/chat_message.dart';
+import 'package:nova_ai/features/history/domain/entities/conversation.dart';
 import 'package:nova_ai/features/home/presentation/pages/home_page.dart';
+
+import '../../../../fixtures/history_fakes.dart';
 
 void main() {
   final evening = DateTime(2026, 9, 13, 21, 30);
@@ -71,6 +75,46 @@ void main() {
     expect(find.text('Buenas noches'), findsOneWidget);
     expect(find.text('dom 13 sep'), findsOneWidget);
     expect(find.text('¿Qué hacemos hoy?', findRichText: true), findsOneWidget);
+  });
+
+  testWidgets('muestra las conversaciones recientes sin desbordarse',
+      (tester) async {
+    final repository = InMemoryConversationRepository([
+      for (var i = 1; i <= 4; i++)
+        Conversation(
+          id: '$i',
+          updatedAt: DateTime(2026, 9, 13, 10 + i),
+          messages: [
+            ChatMessage.user(id: '$i-1', text: 'Pregunta número $i'),
+            const ChatMessage.assistant(id: 'r', text: 'Respuesta'),
+          ],
+        ),
+    ]);
+    tester.view.physicalSize = const Size(360, 800) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(360, 800),
+            textScaler: TextScaler.linear(1.3),
+          ),
+          child: HomePage(clock: () => evening, conversations: repository),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Recientes'), findsOneWidget);
+    expect(find.text('Pregunta número 4'), findsOneWidget);
+    expect(find.text('Pregunta número 2'), findsOneWidget);
+    // Solo las tres más recientes.
+    expect(find.text('Pregunta número 1'), findsNothing);
+    expect(find.text('Ver todo'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   group('greetingFor', () {

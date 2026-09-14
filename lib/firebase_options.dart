@@ -13,7 +13,8 @@ abstract final class DefaultFirebaseOptions {
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => android,
       TargetPlatform.iOS => ios,
-      _ => throw UnsupportedError(
+      _ =>
+        throw UnsupportedError(
           'Firebase aún no está configurado para ${defaultTargetPlatform.name}.',
         ),
     };

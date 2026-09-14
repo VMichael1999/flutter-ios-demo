@@ -17,7 +17,8 @@ double distanceInMeters(GeoPoint from, GeoPoint to) {
   const earthRadiusMeters = 6371000.0;
   final deltaLatitude = _toRadians(to.latitude - from.latitude);
   final deltaLongitude = _toRadians(to.longitude - from.longitude);
-  final a = math.pow(math.sin(deltaLatitude / 2), 2) +
+  final a =
+      math.pow(math.sin(deltaLatitude / 2), 2) +
       math.cos(_toRadians(from.latitude)) *
           math.cos(_toRadians(to.latitude)) *
           math.pow(math.sin(deltaLongitude / 2), 2);

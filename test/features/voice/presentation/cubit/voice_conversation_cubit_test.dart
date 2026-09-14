@@ -8,6 +8,9 @@ import 'package:nova_ai/features/assistant/domain/repositories/ai_repository.dar
 import 'package:nova_ai/features/assistant/domain/usecases/send_message.dart';
 import 'package:nova_ai/features/voice/presentation/cubit/voice_conversation_cubit.dart';
 
+import 'package:nova_ai/features/history/domain/entities/conversation.dart';
+
+import '../../../../fixtures/history_fakes.dart';
 import '../../../../fixtures/places_fixtures.dart';
 import '../../../../fixtures/voice_fakes.dart';
 
@@ -163,5 +166,48 @@ void main() {
 
     expect(speech.stopCalls, 1);
     expect(cubit.state.status, VoiceStatus.thinking);
+  });
+
+  test('guarda cada pregunta y respuesta en el historial', () async {
+    final history = InMemoryConversationRepository();
+    final cubit = VoiceConversationCubit(
+      speech: speech,
+      textToSpeech: FakeTextToSpeech(),
+      sendMessage: SendMessage(repository),
+      conversations: history,
+      continuous: false,
+    );
+    addTearDown(cubit.close);
+    stubReply('Hola', () => Stream.value(const AiTextChunk('¡Hola!')));
+    stubReply('Adiós', () => Stream.value(const AiTextChunk('¡Chao!')));
+
+    for (final question in ['Hola', 'Adiós']) {
+      await cubit.startListening();
+      speech.say(question);
+      await speech.finish();
+      await pumpEventQueue();
+    }
+
+    final conversation = history.saved.values.single;
+    expect(conversation.source, ConversationSource.voice);
+    expect(
+      [for (final message in conversation.messages) message.text],
+      ['Hola', '¡Hola!', 'Adiós', '¡Chao!'],
+    );
+  });
+
+  test('si la voz del teléfono falla lo dice y deja la respuesta escrita',
+      () async {
+    final cubit = buildCubit(FakeTextToSpeech(fails: true));
+    stubReply('Hola', () => Stream.value(const AiTextChunk('¡Hola!')));
+
+    await cubit.startListening();
+    speech.say('Hola');
+    await speech.finish();
+    await pumpEventQueue();
+
+    expect(cubit.state.status, VoiceStatus.failure);
+    expect(cubit.state.errorMessage, contains('voz alta'));
+    expect(cubit.state.reply, '¡Hola!');
   });
 }

@@ -64,12 +64,13 @@ class PlacesRepositoryImpl implements PlacesRepository {
     required int limit,
   }) {
     final seenIds = <String>{};
-    final places = [
-      for (final model in models)
-        if (seenIds.add(model.id))
-          model.toEntity(center: center, category: category),
-    ].where((place) => place.distanceMeters <= radiusMeters).toList()
-      ..sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+    final places =
+        [
+            for (final model in models)
+              if (seenIds.add(model.id))
+                model.toEntity(center: center, category: category),
+          ].where((place) => place.distanceMeters <= radiusMeters).toList()
+          ..sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
 
     final nearest = <Place>[];
     for (final place in places) {

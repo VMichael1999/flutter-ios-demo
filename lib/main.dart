@@ -43,9 +43,10 @@ Future<void> _activateAppCheck() async {
     }
 
     await FirebaseAppCheck.instance.activate(
-      providerWeb: AppConfig.recaptchaSiteKey.isEmpty
-          ? null
-          : ReCaptchaEnterpriseProvider(AppConfig.recaptchaSiteKey),
+      providerWeb:
+          AppConfig.recaptchaSiteKey.isEmpty
+              ? null
+              : ReCaptchaEnterpriseProvider(AppConfig.recaptchaSiteKey),
       providerAndroid: const AndroidPlayIntegrityProvider(),
       providerApple: const AppleAppAttestWithDeviceCheckFallbackProvider(),
     );

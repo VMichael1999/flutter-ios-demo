@@ -55,7 +55,7 @@ void main() {
     await pumpVoice(tester);
 
     expect(speech.listenCalls, 1);
-    expect(find.text('Te escucho…'), findsOneWidget);
+    expect(find.text('Te escucho… habla ahora'), findsOneWidget);
     expect(find.byTooltip('Terminar de hablar'), findsOneWidget);
 
     speech.say('Busca farmacias');

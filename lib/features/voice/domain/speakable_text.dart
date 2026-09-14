@@ -2,10 +2,7 @@
 /// como "asterisco" ni direcciones web.
 String speakableText(String text) {
   return text
-      .replaceAllMapped(
-        RegExp(r'\[([^\]]+)\]\([^)]+\)'),
-        (match) => match[1]!,
-      )
+      .replaceAllMapped(RegExp(r'\[([^\]]+)\]\([^)]+\)'), (match) => match[1]!)
       .replaceAll(RegExp(r'https?://\S+'), '')
       .replaceAll(RegExp(r'^\s*(?:[-•*]|\d+\.)\s+', multiLine: true), '')
       .replaceAll(RegExp(r'[*_`#>~]'), '')

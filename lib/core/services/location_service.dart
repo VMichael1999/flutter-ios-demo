@@ -40,8 +40,8 @@ class GeolocatorLocationService implements LocationService {
           reason: LocationFailureReason.permissionDeniedForever,
         );
       case LocationPermission.whileInUse ||
-            LocationPermission.always ||
-            LocationPermission.unableToDetermine:
+          LocationPermission.always ||
+          LocationPermission.unableToDetermine:
         break;
     }
 

@@ -8,7 +8,10 @@ import '../../../../core/errors/failures.dart';
 import '../../../../core/services/speech_service.dart';
 import '../../../../core/services/text_to_speech_service.dart';
 import '../../../assistant/domain/entities/ai_reply_chunk.dart';
+import '../../../assistant/domain/entities/chat_message.dart';
 import '../../../assistant/domain/usecases/send_message.dart';
+import '../../../history/domain/entities/conversation.dart';
+import '../../../history/domain/repositories/conversation_repository.dart';
 import '../../domain/speakable_text.dart';
 
 part 'voice_state.dart';
@@ -16,21 +19,28 @@ part 'voice_state.dart';
 /// Conversación por voz: escucha, pregunta a NOVA y lee la respuesta.
 ///
 /// Con [continuous] NOVA vuelve a escuchar al terminar de hablar, como en una
-/// llamada. Si la persona no dice nada, la conversación se pausa sola.
+/// llamada. Si la persona no dice nada, la conversación se pausa sola. Cada
+/// pregunta y respuesta se guarda en el historial.
 class VoiceConversationCubit extends Cubit<VoiceState> {
   VoiceConversationCubit({
     required SpeechService speech,
     required TextToSpeechService textToSpeech,
     required SendMessage sendMessage,
+    ConversationRepository? conversations,
+    DateTime Function() clock = DateTime.now,
     this.continuous = true,
-  })  : _speech = speech,
-        _textToSpeech = textToSpeech,
-        _sendMessage = sendMessage,
-        super(const VoiceState());
+  }) : _speech = speech,
+       _textToSpeech = textToSpeech,
+       _sendMessage = sendMessage,
+       _conversations = conversations,
+       _clock = clock,
+       super(const VoiceState());
 
   final SpeechService _speech;
   final TextToSpeechService _textToSpeech;
   final SendMessage _sendMessage;
+  final ConversationRepository? _conversations;
+  final DateTime Function() _clock;
   final bool continuous;
 
   StreamSubscription<SpeechUpdate>? _listening;
@@ -38,6 +48,12 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
 
   /// Cambia en cada turno para ignorar lo que llegue de un turno interrumpido.
   int _turn = 0;
+
+  final _messages = <ChatMessage>[];
+  String? _conversationId;
+
+  /// Volumen del micrófono para animar a NOVA mientras escucha.
+  ValueListenable<double> get soundLevel => _speech.soundLevel;
 
   /// Botón principal: empieza a escuchar, termina la frase o interrumpe.
   Future<void> toggle() async {
@@ -69,9 +85,8 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
         _emit(
           VoiceState(
             status: VoiceStatus.failure,
-            errorMessage: error is SpeechFailure
-                ? error.message
-                : 'No pude escucharte.',
+            errorMessage:
+                error is SpeechFailure ? error.message : 'No pude escucharte.',
           ),
         );
       },
@@ -83,7 +98,8 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
           _emit(
             const VoiceState(
               status: VoiceStatus.failure,
-              errorMessage: 'No te escuché. Toca el micrófono y vuelve a '
+              errorMessage:
+                  'No te escuché. Toca el micrófono y vuelve a '
                   'intentarlo.',
             ),
           );
@@ -120,15 +136,17 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
         _emit(
           state.copyWith(
             status: VoiceStatus.failure,
-            errorMessage: error is AiFailure
-                ? error.message
-                : 'No pude generar una respuesta.',
+            errorMessage:
+                error is AiFailure
+                    ? error.message
+                    : 'No pude generar una respuesta.',
           ),
         );
       },
       onDone: () {
         if (turn != _turn) return;
         _reply = null;
+        _record(question, reply.toString());
         _speak(reply.toString(), turn);
       },
       cancelOnError: true,
@@ -147,7 +165,16 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
       await _textToSpeech.speak(spoken);
     } catch (error) {
       debugPrint('No se pudo leer la respuesta: $error');
-      if (turn == _turn) _emit(state.copyWith(status: VoiceStatus.idle));
+      if (turn == _turn) {
+        _emit(
+          state.copyWith(
+            status: VoiceStatus.failure,
+            errorMessage:
+                'No pude leer la respuesta en voz alta. Revisa el volumen '
+                'del teléfono; la respuesta está escrita abajo.',
+          ),
+        );
+      }
       return;
     }
 
@@ -157,6 +184,33 @@ class VoiceConversationCubit extends Cubit<VoiceState> {
     } else {
       _emit(state.copyWith(status: VoiceStatus.idle));
     }
+  }
+
+  /// Guarda la pregunta y la respuesta en el historial.
+  void _record(String question, String reply) {
+    final conversations = _conversations;
+    if (conversations == null || reply.trim().isEmpty) return;
+
+    final id = _conversationId ??= 'voz-${_clock().microsecondsSinceEpoch}';
+    final index = _messages.length;
+    _messages
+      ..add(ChatMessage.user(id: '$id-$index', text: question))
+      ..add(ChatMessage.assistant(id: '$id-${index + 1}', text: reply));
+
+    unawaited(
+      conversations
+          .save(
+            Conversation(
+              id: id,
+              updatedAt: _clock(),
+              messages: List.of(_messages),
+              source: ConversationSource.voice,
+            ),
+          )
+          .catchError((Object error) {
+            debugPrint('No se pudo guardar la conversación por voz: $error');
+          }),
+    );
   }
 
   Future<void> _stopEverything() async {

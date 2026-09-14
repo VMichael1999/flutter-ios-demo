@@ -1,5 +1,6 @@
 import '../../domain/entities/ai_reply_chunk.dart';
 import '../../domain/entities/chat_attachment.dart';
+import '../../domain/entities/chat_message.dart';
 import 'ai_remote_datasource.dart';
 
 /// Respuestas simuladas para usar NOVA sin Firebase configurado.
@@ -30,4 +31,7 @@ class FakeAiDataSource implements AiRemoteDataSource {
 
   @override
   void reset() {}
+
+  @override
+  void restore(List<ChatMessage> history) {}
 }

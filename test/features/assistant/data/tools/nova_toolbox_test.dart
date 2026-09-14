@@ -93,25 +93,27 @@ void main() {
     ).called(1);
   });
 
-  test('guarda los lugares para la interfaz y los entrega una sola vez',
-      () async {
-    stubSearch(() async => twoPlaces);
+  test(
+    'guarda los lugares para la interfaz y los entrega una sola vez',
+    () async {
+      stubSearch(() async => twoPlaces);
 
-    await toolbox.handleSearchNearbyPlaces({
-      'categoria': 'restaurant',
-      'radioMetros': 2000,
-    });
+      await toolbox.handleSearchNearbyPlaces({
+        'categoria': 'restaurant',
+        'radioMetros': 2000,
+      });
 
-    expect(toolbox.takeFoundPlaces(), [chifaPlace, bodegaPlace]);
-    expect(toolbox.takeFoundPlaces(), isNull);
-    verify(
-      () => searchNearbyPlaces(
-        category: PlaceCategory.restaurant,
-        radiusMeters: 2000,
-        name: null,
-      ),
-    ).called(1);
-  });
+      expect(toolbox.takeFoundPlaces(), [chifaPlace, bodegaPlace]);
+      expect(toolbox.takeFoundPlaces(), isNull);
+      verify(
+        () => searchNearbyPlaces(
+          category: PlaceCategory.restaurant,
+          radiusMeters: 2000,
+          name: null,
+        ),
+      ).called(1);
+    },
+  );
 
   test('rechaza categorías desconocidas sin buscar', () async {
     final result = await toolbox.handleSearchNearbyPlaces({
@@ -131,9 +133,10 @@ void main() {
 
   test('explica a Gemini cuando no hay permiso de ubicación', () async {
     stubSearch(
-      () async => throw const LocationFailure(
-        'No diste permiso para usar tu ubicación.',
-      ),
+      () async =>
+          throw const LocationFailure(
+            'No diste permiso para usar tu ubicación.',
+          ),
     );
 
     final result = await toolbox.handleSearchNearbyPlaces({

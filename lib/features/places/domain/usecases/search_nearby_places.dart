@@ -9,8 +9,8 @@ class SearchNearbyPlaces {
   const SearchNearbyPlaces({
     required LocationService locationService,
     required PlacesRepository repository,
-  })  : _locationService = locationService,
-        _repository = repository;
+  }) : _locationService = locationService,
+       _repository = repository;
 
   static const minRadiusMeters = 100;
 
@@ -26,8 +26,10 @@ class SearchNearbyPlaces {
     String? name,
   }) async {
     final center = await _locationService.getCurrentLocation();
-    final radius =
-        radiusMeters.clamp(minRadiusMeters, AppConfig.nearbyRadiusMeters);
+    final radius = radiusMeters.clamp(
+      minRadiusMeters,
+      AppConfig.nearbyRadiusMeters,
+    );
     final places = await _repository.searchNearby(
       center: center,
       category: category,

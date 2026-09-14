@@ -22,10 +22,7 @@ void main() {
 
   void stubReply(Stream<AiReplyChunk> Function() reply) {
     when(
-      () => dataSource.streamReply(
-        any(),
-        attachment: any(named: 'attachment'),
-      ),
+      () => dataSource.streamReply(any(), attachment: any(named: 'attachment')),
     ).thenAnswer((_) => reply());
   }
 
@@ -57,10 +54,7 @@ void main() {
         .drain<void>();
 
     verify(
-      () => dataSource.streamReply(
-        '¿Qué es?',
-        attachment: testImageAttachment,
-      ),
+      () => dataSource.streamReply('¿Qué es?', attachment: testImageAttachment),
     ).called(1);
   });
 
@@ -85,8 +79,11 @@ void main() {
     expect(
       repository.streamReply('Hola'),
       emitsError(
-        isA<AiFailure>()
-            .having((f) => f.message, 'message', contains('no tiene acceso')),
+        isA<AiFailure>().having(
+          (f) => f.message,
+          'message',
+          contains('no tiene acceso'),
+        ),
       ),
     );
   });
