@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Configuración global de NOVA.
 ///
 /// Los valores se pueden sobrescribir al compilar con `--dart-define`,
@@ -15,6 +17,18 @@ abstract final class AppConfig {
   static const geminiModel = String.fromEnvironment(
     'NOVA_GEMINI_MODEL',
     defaultValue: 'gemini-3.1-flash-lite',
+  );
+
+  /// Usa los proveedores de depuración de App Check (localhost, emuladores y
+  /// simuladores). Sus tokens deben registrarse en la consola de Firebase.
+  static const appCheckDebug = bool.fromEnvironment(
+    'NOVA_APP_CHECK_DEBUG',
+    defaultValue: kDebugMode,
+  );
+
+  /// Clave de sitio de reCAPTCHA Enterprise para App Check en web.
+  static const recaptchaSiteKey = String.fromEnvironment(
+    'NOVA_RECAPTCHA_SITE_KEY',
   );
 
   static const systemPrompt =

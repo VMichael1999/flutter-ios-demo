@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../../../../core/errors/failures.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../datasources/ai_remote_datasource.dart';
@@ -17,12 +19,20 @@ class AiRepositoryImpl implements AiRepository {
       }
     } on AiFailure {
       rethrow;
-    } catch (error) {
-      throw AiFailure(
-        'NOVA no pudo responder. Revisa tu conexión e inténtalo de nuevo.',
-        cause: error,
-      );
+    } catch (error, stackTrace) {
+      debugPrint('Error al contactar la IA: $error\n$stackTrace');
+      throw AiFailure(_userMessageFor(error), cause: error);
     }
+  }
+
+  static String _userMessageFor(Object error) {
+    final details = error.toString();
+    const accessErrors = ['App Check', 'UNAUTHENTICATED', 'PERMISSION_DENIED'];
+    if (accessErrors.any(details.contains)) {
+      return 'NOVA no tiene acceso a la IA en este momento. '
+          'Revisa la configuración de Firebase.';
+    }
+    return 'NOVA no pudo responder. Revisa tu conexión e inténtalo de nuevo.';
   }
 
   @override
