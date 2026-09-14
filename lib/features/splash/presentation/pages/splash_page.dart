@@ -44,13 +44,7 @@ class _SplashPageState extends State<SplashPage> {
           children: [
             const NovaLogo(size: 96),
             const SizedBox(height: 24),
-            Text(
-              AppConfig.appName,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: 2,
-              ),
-            ),
+            Text(AppConfig.appName, style: theme.textTheme.displaySmall),
             const SizedBox(height: 8),
             Text(
               'Tu asistente inteligente',

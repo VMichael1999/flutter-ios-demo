@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'nova_mark.dart';
+
+/// Logo de NOVA: la cara de la mascota sobre un cuadro de tinta, igual que el
+/// ícono de la app.
 class NovaLogo extends StatelessWidget {
   const NovaLogo({super.key, this.size = 72});
 
@@ -7,26 +11,22 @@ class NovaLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       width: size,
       height: size,
+      padding: EdgeInsets.all(size * 0.12),
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [scheme.primary, scheme.tertiary],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: scheme.primary.withValues(alpha: 0.35),
-            blurRadius: size / 3,
-          ),
-        ],
+        color: NovaBrand.ink,
+        borderRadius: BorderRadius.circular(size * 0.28),
+        // En modo oscuro el cuadro de tinta se perdería contra el fondo.
+        border: isDark
+            ? Border.all(color: theme.colorScheme.outlineVariant)
+            : null,
       ),
-      child: Icon(Icons.auto_awesome, color: scheme.onPrimary, size: size * 0.5),
+      child: const CustomPaint(painter: NovaMarkPainter()),
     );
   }
 }

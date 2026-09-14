@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:nova_ai/core/errors/failures.dart';
+import 'package:nova_ai/core/services/speech_service.dart';
 import 'package:nova_ai/features/assistant/data/services/media_picker_service.dart';
 import 'package:nova_ai/features/assistant/domain/entities/chat_attachment.dart';
 import 'package:nova_ai/features/assistant/domain/repositories/ai_repository.dart';
@@ -11,6 +13,7 @@ import 'package:nova_ai/features/assistant/presentation/bloc/chat_bloc.dart';
 import 'package:nova_ai/features/assistant/presentation/pages/chat_page.dart';
 
 import '../../../../fixtures/places_fixtures.dart';
+import '../../../../fixtures/voice_fakes.dart';
 
 class _MockAiRepository extends Mock implements AiRepository {}
 
@@ -38,6 +41,7 @@ void main() {
   Future<void> pumpChat(
     WidgetTester tester, {
     MediaPickerService? mediaPicker,
+    SpeechService? speechService,
     ChatDraft? draft,
     bool pickImageOnOpen = false,
   }) async {
@@ -50,6 +54,7 @@ void main() {
           ),
           child: ChatPage(
             mediaPicker: mediaPicker ?? _RecordingMediaPicker(),
+            speechService: speechService,
             initialDraft: draft,
             pickImageOnOpen: pickImageOnOpen,
           ),
@@ -127,5 +132,67 @@ void main() {
     expect(find.text('Añadir una imagen'), findsNothing);
     expect(picker.requestedSources, isEmpty);
     expect(find.text('Pregúntame lo que quieras'), findsOneWidget);
+  });
+
+  group('dictado', () {
+    testWidgets('lo dictado aparece en el campo después de lo escrito',
+        (tester) async {
+      final speech = FakeSpeechService();
+      await pumpChat(tester, speechService: speech);
+
+      await tester.enterText(find.byType(TextField), 'Busca');
+      await tester.tap(find.byTooltip('Dictar'));
+      await tester.pump();
+      expect(find.byTooltip('Dejar de dictar'), findsOneWidget);
+
+      speech.say('farmacias');
+      await tester.pump();
+      speech.say('farmacias abiertas', isFinal: true);
+      await speech.finish();
+      await tester.pump();
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'Busca farmacias abiertas');
+      expect(find.byTooltip('Dictar'), findsOneWidget);
+      // Dictar no envía: la persona revisa el texto antes.
+      verifyNever(
+        () => repository.streamReply(
+          any(),
+          attachment: any(named: 'attachment'),
+        ),
+      );
+    });
+
+    testWidgets('tocar de nuevo el micrófono termina el dictado',
+        (tester) async {
+      final speech = FakeSpeechService();
+      await pumpChat(tester, speechService: speech);
+
+      await tester.tap(find.byTooltip('Dictar'));
+      await tester.pump();
+      await tester.tap(find.byTooltip('Dejar de dictar'));
+      await tester.pump();
+
+      expect(speech.stopCalls, 1);
+      expect(find.byTooltip('Dictar'), findsOneWidget);
+    });
+
+    testWidgets('explica por qué no pudo escuchar', (tester) async {
+      final speech = FakeSpeechService();
+      await pumpChat(tester, speechService: speech);
+
+      await tester.tap(find.byTooltip('Dictar'));
+      await tester.pump();
+      await speech.fail(
+        const SpeechFailure('NOVA necesita permiso para usar el micrófono.'),
+      );
+      await tester.pump();
+
+      expect(
+        find.text('NOVA necesita permiso para usar el micrófono.'),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Dictar'), findsOneWidget);
+    });
   });
 }

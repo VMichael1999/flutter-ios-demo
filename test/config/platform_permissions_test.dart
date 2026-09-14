@@ -35,6 +35,11 @@ void main() {
       expect(manifest, contains('android:scheme="https"'));
     });
 
+    test('encuentra el reconocedor de voz y la voz del sistema', () {
+      expect(manifest, contains('android.speech.RecognitionService'));
+      expect(manifest, contains('android.intent.action.TTS_SERVICE'));
+    });
+
     test('muestra NOVA AI como nombre de la app', () {
       expect(manifest, contains('android:label="NOVA AI"'));
     });

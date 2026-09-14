@@ -13,6 +13,8 @@ class ChatInput extends StatelessWidget {
     required this.onRemoveAttachment,
     this.attachment,
     this.focusNode,
+    this.isListening = false,
+    this.onMicTap,
   });
 
   final TextEditingController controller;
@@ -26,9 +28,16 @@ class ChatInput extends StatelessWidget {
   /// Imagen lista para enviarse con el próximo mensaje.
   final ChatAttachment? attachment;
 
+  /// Se está dictando: lo que dice la persona va apareciendo en el campo.
+  final bool isListening;
+
+  /// Empieza o termina el dictado. Si es null no se muestra el micrófono.
+  final VoidCallback? onMicTap;
+
   @override
   Widget build(BuildContext context) {
     final attachment = this.attachment;
+    final onMicTap = this.onMicTap;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 8, 12, 12),
@@ -62,9 +71,24 @@ class ChatInput extends StatelessWidget {
                   textCapitalization: TextCapitalization.sentences,
                   onSubmitted: (_) => onSend(),
                   decoration: InputDecoration(
-                    hintText: attachment == null
-                        ? 'Escribe a NOVA…'
-                        : 'Pregunta sobre la imagen…',
+                    hintText: isListening
+                        ? 'Te escucho…'
+                        : attachment == null
+                            ? 'Escribe o dicta a NOVA…'
+                            : 'Pregunta sobre la imagen…',
+                    suffixIcon: onMicTap == null
+                        ? null
+                        : isListening
+                            ? IconButton.filledTonal(
+                                tooltip: 'Dejar de dictar',
+                                onPressed: onMicTap,
+                                icon: const Icon(Icons.graphic_eq_rounded),
+                              )
+                            : IconButton(
+                                tooltip: 'Dictar',
+                                onPressed: isStreaming ? null : onMicTap,
+                                icon: const Icon(Icons.mic_none_rounded),
+                              ),
                   ),
                 ),
               ),

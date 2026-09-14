@@ -34,6 +34,17 @@ class LocationFailure implements Exception {
   String toString() => 'LocationFailure(${reason.name}): $message';
 }
 
+/// No se pudo reconocer la voz: sin permiso de micrófono, sin conexión o sin
+/// reconocedor en el dispositivo.
+class SpeechFailure implements Exception {
+  const SpeechFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'SpeechFailure: $message';
+}
+
 /// Falló la búsqueda de lugares cercanos.
 class PlacesFailure implements Exception {
   const PlacesFailure(this.message, {this.cause});

@@ -1,0 +1,14 @@
+{
+  "assistantText": "He creado la pantalla de inicio para **NOVA AI** con una estética limpia, moderna y con sutiles destellos mágicos. La interfaz cuenta con el fondo lavanda suave, acentos en violeta eléctrico (`#6C4DFF`), la barra superior con identidad de marca, el campo de prompt estilo píldora, la cuadrícula 2x2 de accesos rápidos táctiles y el botón principal de acción directa al chat.",
+  "operations": [
+    {
+      "type": "screen_created",
+      "screenId": "zpaugbEwtGY",
+      "screenName": "Home",
+      "componentId": "LuJn8acFVDw"
+    },
+    {
+      "type": "theme_updated"
+    }
+  ]
+}

@@ -15,8 +15,11 @@ import '../../features/places/data/datasources/places_remote_datasource.dart';
 import '../../features/places/data/repositories/places_repository_impl.dart';
 import '../../features/places/domain/repositories/places_repository.dart';
 import '../../features/places/domain/usecases/search_nearby_places.dart';
+import '../../features/voice/presentation/cubit/voice_conversation_cubit.dart';
 import '../config/app_config.dart';
 import '../services/location_service.dart';
+import '../services/speech_service.dart';
+import '../services/text_to_speech_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -44,6 +47,9 @@ Future<void> configureDependencies({required bool useFirebaseAi}) async {
       () => SearchNearbyPlaces(locationService: getIt(), repository: getIt()),
     )
     ..registerLazySingleton<MediaPickerService>(ImagePickerMediaService.new)
+    // Voz: dictado y lectura en voz alta.
+    ..registerLazySingleton<SpeechService>(SpeechToTextService.new)
+    ..registerLazySingleton<TextToSpeechService>(FlutterTtsService.new)
     // Cada chat recibe su propia sesión, por eso la cadena se registra como
     // factory: el historial de una conversación no se mezcla con otra.
     ..registerFactory<AiRemoteDataSource>(
@@ -58,5 +64,12 @@ Future<void> configureDependencies({required bool useFirebaseAi}) async {
         sendMessage: SendMessage(repository),
         resetConversation: ResetConversation(repository),
       );
-    });
+    })
+    ..registerFactory<VoiceConversationCubit>(
+      () => VoiceConversationCubit(
+        speech: getIt(),
+        textToSpeech: getIt(),
+        sendMessage: SendMessage(getIt<AiRepository>()),
+      ),
+    );
 }

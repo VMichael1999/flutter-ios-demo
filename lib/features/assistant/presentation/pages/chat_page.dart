@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../../../core/errors/failures.dart';
+import '../../../../core/services/speech_service.dart';
 import '../../data/services/media_picker_service.dart';
 import '../../domain/entities/chat_attachment.dart';
 import '../bloc/chat_bloc.dart';
@@ -37,6 +41,7 @@ class ChatPage extends StatefulWidget {
   const ChatPage({
     super.key,
     required this.mediaPicker,
+    this.speechService,
     this.initialPrompt,
     this.initialDraft,
     this.pickImageOnOpen = false,
@@ -44,6 +49,9 @@ class ChatPage extends StatefulWidget {
   });
 
   final MediaPickerService mediaPicker;
+
+  /// Dictado por voz. Sin servicio no se muestra el micrófono.
+  final SpeechService? speechService;
 
   /// Mensaje que se envía automáticamente al abrir el chat.
   final String? initialPrompt;
@@ -64,6 +72,7 @@ class _ChatPageState extends State<ChatPage> {
   final _scrollController = ScrollController();
   final _inputFocus = FocusNode();
   ChatAttachment? _attachment;
+  StreamSubscription<SpeechUpdate>? _dictation;
 
   @override
   void initState() {
@@ -90,6 +99,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    _dictation?.cancel();
     _textController.dispose();
     _scrollController.dispose();
     _inputFocus.dispose();
@@ -137,16 +147,66 @@ class _ChatPageState extends State<ChatPage> {
     } catch (error) {
       debugPrint('No se pudo obtener la imagen: $error');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            source == MediaSource.camera
-                ? 'No se pudo abrir la cámara.'
-                : 'No se pudo abrir la galería.',
-          ),
-        ),
+      _showMessage(
+        source == MediaSource.camera
+            ? 'No se pudo abrir la cámara.'
+            : 'No se pudo abrir la galería.',
       );
     }
+  }
+
+  /// Empieza a dictar o, si ya se está dictando, termina la frase.
+  Future<void> _toggleDictation() async {
+    final speech = widget.speechService;
+    if (speech == null) return;
+    if (_dictation != null) {
+      await speech.stop();
+      return;
+    }
+
+    // Lo dictado se añade a lo que ya estaba escrito.
+    final written = _textController.text.trimRight();
+    setState(() {
+      _dictation = speech.listen().listen(
+        (update) => _showDictation(written, update.text),
+        onError: (Object error) {
+          _endDictation();
+          if (mounted) {
+            _showMessage(
+              error is SpeechFailure ? error.message : 'No pude escucharte.',
+            );
+          }
+        },
+        onDone: _endDictation,
+        cancelOnError: true,
+      );
+    });
+  }
+
+  void _showDictation(String written, String dictated) {
+    final text = [
+      if (written.isNotEmpty) written,
+      if (dictated.isNotEmpty) dictated,
+    ].join(' ');
+    _textController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
+  void _endDictation() {
+    if (_dictation == null) return;
+    if (mounted) {
+      setState(() => _dictation = null);
+    } else {
+      _dictation = null;
+    }
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _send([String? suggestion]) {
@@ -156,6 +216,13 @@ class _ChatPageState extends State<ChatPage> {
     final text = suggestion ?? _textController.text;
     final attachment = suggestion == null ? _attachment : null;
     if (text.trim().isEmpty && attachment == null) return;
+
+    // Enviar a mitad del dictado lo da por terminado con lo ya escrito.
+    if (_dictation != null) {
+      _dictation?.cancel();
+      widget.speechService?.cancel();
+      _dictation = null;
+    }
 
     bloc.add(ChatMessageSent(text, attachment: attachment));
     if (suggestion == null) {
@@ -224,6 +291,9 @@ class _ChatPageState extends State<ChatPage> {
                 focusNode: _inputFocus,
                 isStreaming: isStreaming,
                 attachment: _attachment,
+                isListening: _dictation != null,
+                onMicTap:
+                    widget.speechService == null ? null : _toggleDictation,
                 onSend: _send,
                 onStop: () => context
                     .read<ChatBloc>()
@@ -260,21 +330,14 @@ class _EmptyChat extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.auto_awesome,
-              size: 48,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
             Text(
               'Pregúntame lo que quieras',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'También puedes enviarme una foto con el botón de imagen.',
+              'Escribe, dicta con el micrófono o mándame una foto.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,

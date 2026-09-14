@@ -4,6 +4,7 @@ import 'package:nova_ai/app.dart';
 import 'package:nova_ai/core/di/injection.dart';
 import 'package:nova_ai/features/assistant/presentation/pages/chat_page.dart';
 import 'package:nova_ai/features/splash/presentation/pages/splash_page.dart';
+import 'package:nova_ai/features/voice/presentation/pages/voice_page.dart';
 
 void main() {
   setUp(() => configureDependencies(useFirebaseAi: false));
@@ -26,7 +27,7 @@ void main() {
 
     await tester.tap(find.text('Saltar'));
     await tester.pumpAndSettle();
-    expect(find.text('¿Qué quieres hacer?'), findsOneWidget);
+    expect(find.text('¿Qué hacemos hoy?', findRichText: true), findsOneWidget);
 
     // El botón queda debajo del pliegue en la pantalla de test (800x600).
     final openChatButton = find.text('Abrir chat con NOVA');
@@ -36,6 +37,22 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(openChatButton, findsOneWidget);
+  });
+
+  testWidgets('Voz abre la conversación por voz', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+
+    await openHome(tester);
+
+    await tester.tap(find.text('Voz'));
+    // La pantalla de voz se anima sin parar: no se usa pumpAndSettle.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+
+    expect(find.byType(VoicePage), findsOneWidget);
+    expect(find.text('Habla con NOVA'), findsOneWidget);
   });
 
   testWidgets('Cámara abre el chat preguntando si usar cámara o galería',

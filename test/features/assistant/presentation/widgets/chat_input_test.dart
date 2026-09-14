@@ -17,6 +17,8 @@ void main() {
     ChatAttachment? attachment,
     VoidCallback? onAttach,
     VoidCallback? onRemoveAttachment,
+    bool isListening = false,
+    VoidCallback? onMicTap,
   }) {
     return tester.pumpWidget(
       MaterialApp(
@@ -25,6 +27,8 @@ void main() {
             controller: controller,
             isStreaming: isStreaming,
             attachment: attachment,
+            isListening: isListening,
+            onMicTap: onMicTap,
             onSend: () {},
             onStop: () {},
             onAttach: onAttach ?? () {},
@@ -42,7 +46,7 @@ void main() {
     await tester.tap(find.byTooltip('Adjuntar imagen'));
 
     expect(attachTapped, isTrue);
-    expect(find.text('Escribe a NOVA…'), findsOneWidget);
+    expect(find.text('Escribe o dicta a NOVA…'), findsOneWidget);
   });
 
   testWidgets('muestra la vista previa y permite quitar la imagen',
@@ -69,5 +73,28 @@ void main() {
     );
     expect(attachButton.onPressed, isNull);
     expect(find.byTooltip('Detener'), findsOneWidget);
+  });
+
+  testWidgets('sin dictado disponible no muestra el micrófono', (tester) async {
+    await pumpInput(tester);
+
+    expect(find.byTooltip('Dictar'), findsNothing);
+  });
+
+  testWidgets('el micrófono empieza el dictado', (tester) async {
+    var micTapped = false;
+    await pumpInput(tester, onMicTap: () => micTapped = true);
+
+    await tester.tap(find.byTooltip('Dictar'));
+
+    expect(micTapped, isTrue);
+  });
+
+  testWidgets('mientras dicta avisa que escucha y permite terminar',
+      (tester) async {
+    await pumpInput(tester, isListening: true, onMicTap: () {});
+
+    expect(find.text('Te escucho…'), findsOneWidget);
+    expect(find.byTooltip('Dejar de dictar'), findsOneWidget);
   });
 }

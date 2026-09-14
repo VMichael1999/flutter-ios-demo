@@ -6,6 +6,8 @@ import '../../features/assistant/presentation/pages/chat_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../../features/splash/presentation/pages/splash_page.dart';
+import '../../features/voice/presentation/cubit/voice_conversation_cubit.dart';
+import '../../features/voice/presentation/pages/voice_page.dart';
 import '../config/app_config.dart';
 import '../di/injection.dart';
 import 'app_routes.dart';
@@ -38,6 +40,7 @@ GoRouter createAppRouter() {
             create: (_) => getIt<ChatBloc>(),
             child: ChatPage(
               mediaPicker: getIt(),
+              speechService: getIt(),
               initialPrompt: options.prompt,
               initialDraft: options.draft,
               pickImageOnOpen: options.pickImage,
@@ -45,6 +48,13 @@ GoRouter createAppRouter() {
             ),
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.voice,
+        builder: (context, state) => BlocProvider(
+          create: (_) => getIt<VoiceConversationCubit>(),
+          child: const VoicePage(),
+        ),
       ),
     ],
   );

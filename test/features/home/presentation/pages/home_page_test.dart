@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nova_ai/core/theme/app_theme.dart';
 import 'package:nova_ai/features/home/presentation/pages/home_page.dart';
 
 void main() {
+  final evening = DateTime(2026, 9, 13, 21, 30);
+
   /// Dibuja la home con el tamaño de un teléfono y el tamaño de letra dado.
   /// Cualquier desbordamiento de diseño hace fallar el test.
   Future<void> pumpHomeOnPhone(
     WidgetTester tester, {
     required Size logicalSize,
     double textScale = 1,
+    ThemeData? theme,
   }) async {
     tester.view.physicalSize = logicalSize * 3;
     tester.view.devicePixelRatio = 3;
@@ -16,12 +20,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
+        theme: theme ?? AppTheme.light(),
         home: Builder(
           builder: (context) => MediaQuery(
             data: MediaQuery.of(context).copyWith(
               textScaler: TextScaler.linear(textScale),
             ),
-            child: const HomePage(),
+            child: HomePage(clock: () => evening),
           ),
         ),
       ),
@@ -29,17 +34,17 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('los accesos rápidos caben en un teléfono de 360 px',
-      (tester) async {
+  testWidgets('los atajos caben en un teléfono de 360 px', (tester) async {
     await pumpHomeOnPhone(tester, logicalSize: const Size(360, 800));
 
-    for (final label in ['Cámara', 'Voz', 'Documento', 'Ubicación']) {
+    for (final label in ['Voz', 'Cámara', 'Ubicación', 'Documento']) {
       expect(find.text(label), findsOneWidget);
     }
+    expect(find.text('Pronto'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('los accesos rápidos no se desbordan con la letra al 130 %',
+  testWidgets('los atajos no se desbordan con la letra al 130 %',
       (tester) async {
     await pumpHomeOnPhone(
       tester,
@@ -48,5 +53,37 @@ void main() {
     );
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('también se ve bien en modo oscuro', (tester) async {
+    await pumpHomeOnPhone(
+      tester,
+      logicalSize: const Size(360, 800),
+      theme: AppTheme.dark(),
+    );
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('saluda según la hora y muestra la fecha', (tester) async {
+    await pumpHomeOnPhone(tester, logicalSize: const Size(360, 800));
+
+    expect(find.text('Buenas noches'), findsOneWidget);
+    expect(find.text('dom 13 sep'), findsOneWidget);
+    expect(find.text('¿Qué hacemos hoy?', findRichText: true), findsOneWidget);
+  });
+
+  group('greetingFor', () {
+    test('cambia con la hora del día', () {
+      expect(greetingFor(DateTime(2026, 1, 1, 3)), 'Buenas noches');
+      expect(greetingFor(DateTime(2026, 1, 1, 8)), 'Buenos días');
+      expect(greetingFor(DateTime(2026, 1, 1, 12)), 'Buenas tardes');
+      expect(greetingFor(DateTime(2026, 1, 1, 19)), 'Buenas noches');
+    });
+  });
+
+  test('shortSpanishDate usa días y meses en español', () {
+    expect(shortSpanishDate(DateTime(2026, 9, 13)), 'dom 13 sep');
+    expect(shortSpanishDate(DateTime(2026, 2, 4)), 'mié 4 feb');
   });
 }
