@@ -25,7 +25,8 @@ class OverpassPlacesDataSource implements PlacesRemoteDataSource {
   OverpassPlacesDataSource(
     this._client, {
     List<Uri>? endpoints,
-    this.timeout = const Duration(seconds: 20),
+    // Si un servidor está saturado conviene pasar pronto al siguiente.
+    this.timeout = const Duration(seconds: 8),
   }) : _endpoints = endpoints ?? AppConfig.overpassEndpoints;
 
   /// Elementos que se piden por consulta antes de ordenar por distancia.

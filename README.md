@@ -17,6 +17,27 @@ voz, documentos y la ubicación para ejecutar acciones reales en el dispositivo.
 - [x] Pantalla de chat con BLoC
 - [x] Streaming de respuestas, indicador de escritura y cancelación
 - [x] Gemini mediante Firebase AI Logic, protegido con App Check
+- [x] Lugares cercanos desde el chat (function calling + GPS + OpenStreetMap)
+- [x] Permisos nativos: Internet, ubicación, cámara, micrófono y notificaciones
+
+## Lugares cerca de mí
+
+Si escribes en el chat algo como *"Busca restaurantes cerca de mí"*, Gemini
+llama a la función `buscarLugaresCercanos` de NOVA:
+
+```text
+Usuario → Gemini → buscarLugaresCercanos(categoria, radioMetros)
+        → GPS (geolocator) → Overpass/OpenStreetMap
+        → 5 lugares más cercanos (máx. 5 km) → Gemini responde + tarjetas en el chat
+```
+
+- Busca primero a 1 km, luego a 2,5 km y hasta 5 km solo si faltan resultados.
+- Ordena por distancia real (Haversine) y quita locales duplicados.
+- Categorías: restaurantes, cafeterías, comida rápida, bares, farmacias,
+  hospitales, bancos, cajeros, gasolineras, supermercados, parques y hoteles.
+- Cada tarjeta muestra la distancia y un botón **Cómo llegar** (Google Maps).
+- OpenStreetMap es gratuito y no necesita API key; si un servidor de Overpass
+  está saturado se prueba el siguiente.
 
 En plataformas sin configuración de Firebase la app arranca en **modo demo** con
 respuestas simuladas, así la interfaz y los tests funcionan sin credenciales.

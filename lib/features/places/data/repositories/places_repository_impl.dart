@@ -60,6 +60,21 @@ class PlacesRepositoryImpl implements PlacesRepository {
           model.toEntity(center: center, category: category),
     ].where((place) => place.distanceMeters <= radiusMeters).toList()
       ..sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
-    return places.take(limit).toList();
+
+    final nearest = <Place>[];
+    for (final place in places) {
+      if (nearest.length == limit) break;
+      if (!nearest.any((kept) => _isSameVenue(kept, place))) nearest.add(place);
+    }
+    return nearest;
+  }
+
+  /// OpenStreetMap a veces registra un local dos veces (como punto y como
+  /// edificio). Dos sucursales con el mismo nombre suelen estar más lejos.
+  static const duplicateVenueMeters = 150;
+
+  static bool _isSameVenue(Place a, Place b) {
+    return a.name.trim().toLowerCase() == b.name.trim().toLowerCase() &&
+        distanceInMeters(a.location, b.location) < duplicateVenueMeters;
   }
 }

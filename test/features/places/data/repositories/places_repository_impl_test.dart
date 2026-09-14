@@ -33,6 +33,16 @@ PlaceModel _placeAt(String id, {required double metersNorth}) => PlaceModel(
       longitude: testCenter.longitude,
     );
 
+extension on PlaceModel {
+  PlaceModel copyWithName(String name) => PlaceModel(
+        id: id,
+        name: name,
+        latitude: latitude,
+        longitude: longitude,
+        address: address,
+      );
+}
+
 void main() {
   test('ordena del más cercano al más lejano y respeta el límite', () async {
     final dataSource = _FakePlacesDataSource({
@@ -75,6 +85,26 @@ void main() {
 
     expect(dataSource.requestedRadii, [1000, 2500, 5000]);
     expect(places.map((p) => p.id), ['cerca', 'lejos']);
+  });
+
+  test('muestra una sola vez el mismo local registrado dos veces', () async {
+    final dataSource = _FakePlacesDataSource({
+      1000: [
+        _placeAt('nodo', metersNorth: 87).copyWithName('La fuente de Soda'),
+        _placeAt('edificio', metersNorth: 93).copyWithName('La Fuente de Soda'),
+        _placeAt('sucursal', metersNorth: 900).copyWithName('La Fuente de Soda'),
+      ],
+    });
+    final repository = PlacesRepositoryImpl(dataSource);
+
+    final places = await repository.searchNearby(
+      center: testCenter,
+      category: PlaceCategory.restaurant,
+      radiusMeters: 1000,
+      limit: 5,
+    );
+
+    expect(places.map((p) => p.id), ['nodo', 'sucursal']);
   });
 
   test('descarta lugares fuera del radio y duplicados', () async {
