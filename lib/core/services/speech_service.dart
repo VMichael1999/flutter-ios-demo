@@ -47,11 +47,15 @@ class SpeechToTextService implements SpeechService {
   /// Si en este tiempo no empieza a escuchar, algo falló sin avisar.
   static const _startTimeout = Duration(seconds: 6);
 
+  /// Máximo para averiguar el idioma antes de escuchar.
+  static const _localeTimeout = Duration(seconds: 2);
+
   final SpeechToText _speech;
   final _soundLevel = ValueNotifier<double>(0);
 
   StreamController<SpeechUpdate>? _session;
   String? _localeId;
+  bool _localeResolved = false;
 
   /// Cada intento de escuchar tiene un número: los avisos de un intento
   /// anterior (por ejemplo, antes de un reintento) se ignoran.
@@ -59,6 +63,7 @@ class SpeechToTextService implements SpeechService {
   bool _isListening = false;
   bool _retried = false;
   Timer? _startWatchdog;
+  Timer? _prepareWatchdog;
 
   @override
   ValueListenable<double> get soundLevel => _soundLevel;
@@ -95,6 +100,23 @@ class SpeechToTextService implements SpeechService {
   }
 
   Future<void> _start(StreamController<SpeechUpdate> session) async {
+    // Vigila también la preparación: si algo se cuelga antes de escuchar,
+    // la persona recibe un aviso en vez de una pantalla quieta.
+    final attempt = _attempt;
+    _prepareWatchdog?.cancel();
+    _prepareWatchdog = Timer(_startTimeout * 2, () {
+      if (identical(_session, session) &&
+          attempt == _attempt &&
+          !_isListening) {
+        debugPrint('Voz: la preparación del reconocedor no terminó');
+        _fail(
+          session,
+          const SpeechFailure(
+            'No pude activar el reconocimiento de voz. Inténtalo otra vez.',
+          ),
+        );
+      }
+    });
     if (!await _initialize()) {
       _fail(
         session,
@@ -154,7 +176,19 @@ class SpeechToTextService implements SpeechService {
         debugLogging: kDebugMode,
       );
       debugPrint('Voz: reconocedor disponible: $ready');
-      if (ready) _localeId ??= await _spanishLocale();
+      if (ready && !_localeResolved) {
+        // En Android 13 el plugin puede no responder nunca al pedir los
+        // idiomas: sin este límite NOVA se quedaba en "Te escucho…" sin
+        // empezar a escuchar.
+        _localeId = await _spanishLocale().timeout(
+          _localeTimeout,
+          onTimeout: () {
+            debugPrint('Voz: sin respuesta de idiomas, se usa el del teléfono');
+            return null;
+          },
+        );
+        _localeResolved = true;
+      }
       return ready;
     } catch (error) {
       debugPrint('Voz: reconocimiento no disponible: $error');
@@ -296,6 +330,7 @@ class SpeechToTextService implements SpeechService {
     _attempt++;
     _isListening = false;
     _startWatchdog?.cancel();
+    _prepareWatchdog?.cancel();
     _soundLevel.value = 0;
   }
 }
